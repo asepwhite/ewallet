@@ -1,0 +1,22 @@
+{
+  "name": "ewalllet",
+  "version": "1.0.0",
+  "description": "ewallet tugas 1 sisdis",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asepwhite/ewallet.git"
+  },
+  "keywords": [
+    "ewallet"
+  ],
+  "author": "Akbar Septriyan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/asepwhite/ewallet/issues"
+  },
+  "homepage": "https://github.com/asepwhite/ewallet#readme"
+}
