@@ -1,0 +1,46 @@
+const express = require('express')
+const app = express()
+const axios = require('axios')
+var Promise = require("bluebird");
+
+var jobs = []
+var testSum = 0;
+
+
+app.get('/', function(req, res){
+
+  var job1 = function(){
+    axios.get('http://localhost:4001/')
+    .then(function (response) {
+      console.log(response.data)
+      testSum++
+      return response.data
+    }).catch(function(err){
+      console.log(err)
+      return err
+    });
+  }
+
+  var job2 = axios.get('http://localhost:4000/')
+  .then(function (response) {
+    console.log(response.data)
+    testSum++
+  }).catch(function(err){
+    console.log(err)
+  });
+
+  jobs.push(job1())
+  jobs.push(job2)
+  Promise.all(jobs).then(function(){
+    console.log("wkwk")
+    console.log(testSum)
+    testSum = 0
+  })
+  console.log(testSum)
+})
+
+
+
+app.listen(3000, function(){
+  console.log('app listen on port 3000')
+})

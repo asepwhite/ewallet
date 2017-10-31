@@ -45,6 +45,28 @@ app.post('/ewallet/getSaldo', jsonParser, function(req, res){
   }
 })
 
+app.post('/ewallet/transfer', jsonParser, function(req, res){
+  var output = {}
+  if(!req.body.user_id || req.body.nilai == null){
+    output.nilai_saldo = -99
+    res.status(200).send(output)
+  } else {
+    ewallet.transfer(req.body.user_id, req.body.nilai).then(function(saldo){
+      output.status_transfer = saldo
+      res.send(output)
+    }).catch(function(err){
+      output.status_transfer = saldo
+      res.send(output)
+    })
+  }
+})
+
+app.get('/test', function(req, res){
+   ewallet.checkQuorum().then(function(response){
+     res.send(response)
+   })
+})
+
 
 app.listen(3000, function(){
   console.log('app listen on port 3000')
