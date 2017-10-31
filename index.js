@@ -224,6 +224,14 @@ app.get('/customQuorum', jsonParser, function(req,res){
   })
 })
 
+app.get('/quorum', function(req,res){
+  ewallet.checkQuorum().then(function(response){
+    console.log(response)
+  }).catch(function(err){
+    console.log(err)
+  })
+})
+
 
 app.listen(3000, function(){
   console.log('app listen on port 3000')
