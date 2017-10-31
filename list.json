@@ -1,38 +1,38 @@
 [
     {
-        "ip": "http://localhost:4000",
+        "ip": "localhost:4000",
         "npm": "1406623065"
     },
     {
-        "ip": "http://localhost:4001",
+        "ip": "localhost:4001",
         "npm": "1406623066"
     },
     {
-        "ip": "http://localhost:4002",
+        "ip": "localhost:4002",
         "npm": "1406543605"
     },
     {
-        "ip": "http://localhost:4003",
+        "ip": "localhost:4003",
         "npm": "1406574296"
     },
     {
-        "ip": "http://localhost:4004",
+        "ip": "localhost:4004",
         "npm": "1406578275"
     },
     {
-        "ip": "http://localhost:4005",
+        "ip": "localhost:4005",
         "npm": "1406543712"
     },
     {
-        "ip": "http://localhost:4006",
+        "ip": "localhost:4006",
         "npm": "1406543712"
     },
     {
-        "ip": "http://localhost:4007",
+        "ip": "localhost:4007",
         "npm": "1406543712"
     },
     {
-        "ip": "http://localhost:4008",
+        "ip": "localhost:4008",
         "npm": "1406543712"
     }
   ]

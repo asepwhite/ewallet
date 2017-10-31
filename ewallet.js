@@ -70,7 +70,6 @@ var transferSaldo = function(userId, totalTransfer){
 
 var decreaseSaldo = function(userId, totalTransfer){
   totalTransfer = parseInt(totalTransfer)
-  console.log(totalTransfer+" total transfer")
   if(totalTransfer < 0 || totalTransfer > 1000000000){
       return Promise.resolve(-5)
   }
@@ -81,7 +80,7 @@ var decreaseSaldo = function(userId, totalTransfer){
         updatedSaldo = userData.saldo-totalTransfer
         user.set('saldo', updatedSaldo)
         user.save()
-        return updatedSaldo;
+        return 1;
       } else {
         return -1
       }
@@ -94,7 +93,7 @@ var decreaseSaldo = function(userId, totalTransfer){
 }
 
 var pingRequest = function(url){
-  return axios.post(url).then(function(response){
+  return axios.post("http://"+url+"/ewallet/ping").then(function(response){
     return response.data
   }).catch(function(err){
     return Promise.reject(err)
@@ -108,7 +107,7 @@ var checkQuorum = function(){
     var succedPing = 0
     var failedPing = 0
     for (var index in IPdictionaryies) {
-      var job = pingRequest(IPdictionaryies[index].ip+"/ewallet/ping").then(function(response){
+      var job = pingRequest(IPdictionaryies[index].ip).then(function(response){
         succedPing += 1
         return Promise.resolve(1)
       }).catch(function(err){
@@ -126,21 +125,19 @@ var checkQuorum = function(){
   })
 }
 
-var registerRequest = function(userId, url){
+var selfRegisterRequest = function(userId, url){
   return sequelize.sync().then(function(){
     return User.findOne({ where: {npm : userId}}).then(function(user){
       if(user){
         userData = user.dataValues;
         userName = userData.nama
-        return axios.post(url, {
+        return axios.post("http://"+url+"/ewallet/register", {
           user_id: userId,
           nama: userName
         }).then(function(response){
-          if(response.data.status_register == 1){
-            return 1
-          } else {
-            return -99
-          }
+          return response.status_register
+        }).catch(function(err){
+          return -99
         })
       } else {
         return -99
@@ -148,14 +145,9 @@ var registerRequest = function(userId, url){
     }).catch(function(err){
       return -99
     });
-})
+  })
 };
 
-var getSaldoRequest = function(userId, url){
-  return axios.post(url, {user_id:userId}).then(function(response){
-    return response.data.nilai_saldo
-  })
-}
 
 var getTotalSaldoRequest = function(userId){
   return axios.get('http://localhost:4000/list').then(function(response){
@@ -169,7 +161,7 @@ var getTotalSaldoRequest = function(userId){
     if(!domicileIP){
       return -1;
     }
-    return axios.post(domicileIP+'/ewallet/getTotalSaldo', {user_id : userId}).then(function(response){
+    return axios.post("http://"+domicileIP+'/ewallet/getTotalSaldo', {user_id : userId}).then(function(response){
       return response.data.nilai_saldo
     }).catch(function(err){
       return -3
@@ -177,22 +169,9 @@ var getTotalSaldoRequest = function(userId){
   })
 }
 
-var registerAndGetSaldoRequest = function(userId, url){
-  return getSaldoRequest(userId, url+"/ewallet/getSaldo").then(function(response){
-    if(response == -1){
-      return registerRequest(userId, url+"ewalllet/register").then(function(response){
-        if(response.data.status_register != 1){
-          return -99
-        } else{
-          return getSaldoRequest(userId, url+"/ewallet/getSaldo").then(function(response){
-            return response
-          })
-        }
-      }).catch(function(err){
-        return -99
-      })
-    }
-    return response
+var getSaldoRequest = function(userId, url){
+  return axios.post("http://"+url+"/ewallet/getSaldo", {user_id:userId}).then(function(response){
+    return response.data.nilai_saldo
   }).catch(function(err){
     return -3
   })
@@ -205,16 +184,39 @@ var getSaldoFromAllBranch = function(userId){
     var undefinedError = 0
     var totalSaldo = 0
     for (var index in IPDictionaries) {
-      jobs.push(registerAndGetSaldoRequest(userId, IPDictionaries[index].ip).then(function(response){
-        if(response < 0 ){
-          if(response == -3){
-            undefinedError = -3
-          } else {
-            undefinedError = -99
-          }
-        } else {
-          totalSaldo += response
+      jobs.push(getSaldoRequest(userId, IPDictionaries[index].ip).then(function(response){
+        if(response >= 0){
+          totalSaldo +=response
         }
+        //if user in not registered then register the user
+        else if(response == -1){
+          return selfRegisterRequest(userId, IPDictionaries[index].ip).then(function(response){
+            //call again if self register is success
+            if(response == 1){
+              return getSaldoRequest(userId, IPDictionaries[index].ip).then(function(response){
+                if(response > 0){
+                  totalSaldo += response
+                } else if (response == -2) {
+                  undefinedError = -2
+                } else if (response == -3) {
+                  undefinedError = -3
+                } else{
+                  undefinedError = -99
+                }
+                return response
+              })
+            }
+          }).catch(function(err){
+            return -99
+          })
+        } else if (response == -2) {
+          undefinedError = -2
+        } else if (response == -3) {
+          undefinedError = -3
+        } else{
+          undefinedError = -99
+        }
+        return response
       }))
     }
     return Promise.all(jobs).then(function(){
@@ -222,6 +224,8 @@ var getSaldoFromAllBranch = function(userId){
         return -99
       } else if (undefinedError == -3) {
         return -3
+      } else if (undefinedError == -2) {
+        return -2
       } else {
         return totalSaldo
       }
@@ -230,16 +234,22 @@ var getSaldoFromAllBranch = function(userId){
 }
 
 var getTotalSaldo = function(userId){
+  userId = parseInt(userId)
   if(userId != '1406623064'){
     return Promise.resolve(getTotalSaldoRequest(userId))
   } else {
     return getSaldoFromAllBranch(userId).then(function(response){
+      if(response < 0) {
+        return Promise.resolve(response)
+      }
       saldoFromOtherBranch = response
       return getSaldo(userId).then(function(response){
-        if(saldoFromOtherBranch < 0){
-          return saldoFromOtherBranch
+        if(response < 0){
+          return -99
         }
         return Promise.resolve(saldoFromOtherBranch + response)
+      }).catch(function(err){
+        return -99
       })
     })
   }

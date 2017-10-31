@@ -41,13 +41,13 @@ stdin.addListener("data", function(data) {
     }
   } else {
     if(prevCommand == 1){
-      axios.post(input+"/ewallet/ping").then(function(response){
+      axios.post("http://"+input+"/ewallet/ping").then(function(response){
         console.log(response.data)
         prevCommand = 0
       })
     } else if(prevCommand == 2){
       var params = input.split(',')
-      axios.post(params[0]+"/ewallet/register", {
+      axios.post("http://"+params[0]+"/ewallet/register", {
         user_id: params[1],
         nama : params[2]
       }).then(function(response){
@@ -56,7 +56,7 @@ stdin.addListener("data", function(data) {
       })
     } else if(prevCommand == 3){
       var params = input.split(',')
-      axios.post(params[0]+"/ewallet/getSaldo", {
+      axios.post("http://"+params[0]+"/ewallet/getSaldo", {
         user_id: params[1]
       }).then(function(response){
         console.log(response.data)
@@ -69,7 +69,7 @@ stdin.addListener("data", function(data) {
       })
     } else if(prevCommand == 5){
       var params = input.split(',')
-      axios.post(params[0]+"/ewallet/transfer", {
+      axios.post("http://"+params[0]+"/ewallet/transfer", {
         user_id: params[2],
         nilai: params[1]
       }).then(function(response){
@@ -77,31 +77,34 @@ stdin.addListener("data", function(data) {
             prevCommand = 2
             console.log("Silahkan masukan url, npm dan nama untuk di register dengan format (url,npm,nama): ")
         } else if (response.data.nilai_saldo < 0){
-            console.log(response.data.nilai_saldo)
+            console.log(response.data)
             prevCommand = 0
         } else {
+            var statusTransfer = response.data
             ewallet.decreaseSaldo(params[2], params[1]).then(function(response){
-              console.log("Sisa saldo : ", response)
-              console.log("Status transfer 1")
+              if(response == 1){
+                console.log(statusTransfer)
+              }
               prevCommand = 0
+            }).catch(function(err){
+              console.log("error when decreasing saldo")
+              console.log(err)
             })
         }
       })
     } else if(prevCommand == 4){
       var params = input.split(',')
-      axios.post(params[0]+"/ewallet/getTotalSaldo", {
+      axios.post("http://"+params[0]+"/ewallet/getTotalSaldo", {
         user_id: params[1]
       }).then(function(response){
         console.log(response.data)
         prevCommand = 0
+      }).catch(function(err){
+        console.log(err)
       })
     }
   }
 });
-
-
-
-
 
 
 //API
@@ -115,12 +118,13 @@ app.post('/ewallet/register', jsonParser, function(req, res){
   var output = {}
   if(!req.body.user_id || !req.body.nama){
     output.status_register = -99;
+    console.log("param not completed")
     res.status(200).send(output);
   } else {
     ewallet.checkQuorum().then(function(response){
       successPing = response.successPing
       failedPing = response.failedPing
-      if(successPing/failedPing >= 0.625){
+      if(successPing/(successPing+failedPing) >= 0.625){
         ewallet.register(req.body.user_id, req.body.nama).then(function(response){
           output.status_register = response;
           res.status(200).send(output);
@@ -128,6 +132,9 @@ app.post('/ewallet/register', jsonParser, function(req, res){
           output.status_register = err;
           res.status(200).send(output);
         });
+      } else {
+          output.status_register = -2
+          res.send(output)
       }
     })
   }
@@ -142,7 +149,7 @@ app.post('/ewallet/getSaldo', jsonParser, function(req, res){
     ewallet.checkQuorum().then(function(response){
       successPing = response.successPing
       failedPing = response.failedPing
-      if(successPing/failedPing >= 0.625){
+      if(successPing/(successPing+failedPing) >= 0.625){
         ewallet.getSaldo(req.body.user_id).then(function(saldo){
           output.nilai_saldo = saldo
           res.send(output)
@@ -150,6 +157,9 @@ app.post('/ewallet/getSaldo', jsonParser, function(req, res){
           output.nilai_saldo = saldo
           res.send(output)
         })
+      } else {
+        output.nilai_saldo = -2
+        res.send(output)
       }
     })
   }
@@ -164,7 +174,7 @@ app.post('/ewallet/transfer', jsonParser, function(req, res){
     ewallet.checkQuorum().then(function(response){
       successPing = response.successPing
       failedPing = response.failedPing
-      if(successPing/failedPing >= 0.625){
+      if(successPing/(successPing+failedPing) >= 0.625){
         ewallet.transfer(req.body.user_id, req.body.nilai).then(function(saldo){
           output.status_transfer = saldo
           res.send(output)
@@ -172,6 +182,8 @@ app.post('/ewallet/transfer', jsonParser, function(req, res){
           output.status_transfer = saldo
           res.send(output)
         })
+      } else {
+        output.status_transfer = -2
       }
     })
   }
@@ -186,11 +198,14 @@ app.post('/ewallet/getTotalSaldo', jsonParser, function(req, res){
   ewallet.checkQuorum().then(function(response){
     successPing = response.successPing
     failedPing = response.failedPing
-    if(successPing/failedPing >= 1){
+    if(successPing/(successPing+failedPing) >= 1){
       ewallet.getTotalSaldo(req.body.user_id).then(function(response){
         output.nilai_saldo = response
         res.send(output)
       })
+    } else {
+      output.nilai_saldo = -2
+      res.send(output)
     }
   })
 
