@@ -67,6 +67,19 @@ app.get('/test', function(req, res){
    })
 })
 
+app.post('/ewallet/getTotalSaldo', jsonParser, function(req, res){
+  var output = {}
+  if(!req.body.user_id){
+    output.nilai_saldo = -99
+    res.send(output)
+  }
+  ewallet.getTotalSaldo(req.body.user_id).then(function(response){
+    output.nilai_saldo = response
+    res.send(output)
+  })
+
+})
+
 
 app.listen(3000, function(){
   console.log('app listen on port 3000')

@@ -18,7 +18,7 @@ var registerUser = function registerUser(userId, name){
       nama: name,
       saldo: 0
     }).then(function(){
-      return -1
+      return 1
     }).catch(function(err){
       return -4
     });
@@ -101,6 +101,125 @@ var checkQuorum = function(){
   })
 }
 
+var registerRequest = function(userId, url){
+  return sequelize.sync().then(function(){
+    return User.findOne({ where: {npm : userId}}).then(function(user){
+      if(user){
+        userData = user.dataValues;
+        userName = userData.nama
+        return axios.post(url, {
+          user_id: userId,
+          nama: userName
+        }).then(function(response){
+          if(response.data.status_register == 1){
+            return 1
+          } else {
+            return -99
+          }
+        })
+      } else {
+        return -99
+      }
+    }).catch(function(err){
+      return -99
+    });
+})
+};
+
+var getSaldoRequest = function(userId, url){
+  return axios.post(url, {user_id:userId}).then(function(response){
+    return response.data.nilai_saldo
+  })
+}
+
+var getTotalSaldoRequest = function(userId){
+  return axios.get('http://localhost:4000/list').then(function(response){
+    IPDictionaries = response.data
+    var domicileIP = ""
+    for (var index in IPDictionaries) {
+      if(IPDictionaries[index].npm == userId){
+        domicileIP = IPDictionaries[index].ip
+      }
+    }
+    if(!domicileIP){
+      return -1;
+    }
+    return axios.post(domicileIP+'/ewallet/getTotalSaldo', {user_id : userId}).then(function(response){
+      return response.data.nilai_saldo
+    }).catch(function(err){
+      return -3
+    })
+  })
+}
+
+var registerAndGetSaldoRequest = function(userId, url){
+  return getSaldoRequest(userId, url+"/ewallet/getSaldo").then(function(response){
+    if(response == -1){
+      return registerRequest(userId, url+"ewalllet/register").then(function(response){
+        if(response.data.status_register != 1){
+          return -99
+        } else{
+          return getSaldoRequest(userId, url+"/ewallet/getSaldo").then(function(response){
+            return response
+          })
+        }
+      }).catch(function(err){
+        return -99
+      })
+    }
+    return response
+  }).catch(function(err){
+    return -3
+  })
+}
+
+var getSaldoFromAllBranch = function(userId){
+  return axios.get('http://localhost:4000/list').then(function(response){
+    var jobs = []
+    var IPDictionaries = response.data
+    var undefinedError = 0
+    var totalSaldo = 0
+    for (var index in IPDictionaries) {
+      jobs.push(registerAndGetSaldoRequest(userId, IPDictionaries[index].ip).then(function(response){
+        if(response < 0 ){
+          if(response == -3){
+            undefinedError = -3
+          } else {
+            undefinedError = -99
+          }
+        } else {
+          totalSaldo += response
+        }
+      }))
+    }
+    return Promise.all(jobs).then(function(){
+      if(undefinedError == -99){
+        return -99
+      } else if (undefinedError == -3) {
+        return -3
+      } else {
+        return totalSaldo
+      }
+    })
+  })
+}
+
+var getTotalSaldo = function(userId){
+  if(userId != '1406623064'){
+    return Promise.resolve(getTotalSaldoRequest(userId))
+  } else {
+    return getSaldoFromAllBranch(userId).then(function(response){
+      saldoFromOtherBranch = response
+      return getSaldo(userId).then(function(response){
+        if(saldoFromOtherBranch < 0){
+          return saldoFromOtherBranch
+        }
+        return Promise.resolve(saldoFromOtherBranch + response)
+      })
+    })
+  }
+}
+
 
 module.exports = {
   register : registerUser,
@@ -108,6 +227,7 @@ module.exports = {
   transfer : transferSaldo,
   makePingRequest : pingRequest,
   checkQuorum : checkQuorum,
+  getTotalSaldo: getTotalSaldo,
   test : function(){
     return "1"
   }
