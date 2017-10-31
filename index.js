@@ -196,6 +196,19 @@ app.post('/ewallet/getTotalSaldo', jsonParser, function(req, res){
 
 })
 
+app.get('/customQuorum', jsonParser, function(req,res){
+  var output = []
+  axios.get('http://localhost:4000/list').then(function(response){
+    var IPDictionaries = response.data
+      for (var index in IPDictionaries) {
+          if(IPDictionaries[index].npm == 1406543605 || IPDictionaries[index].npm == 1406574296 || IPDictionaries[index].npm == 1406578275) {
+            output.push(IPDictionaries[index])
+          }
+      }
+    res.send(output)
+  })
+})
+
 
 app.listen(3000, function(){
   console.log('app listen on port 3000')
