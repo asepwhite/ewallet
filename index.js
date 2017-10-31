@@ -41,13 +41,13 @@ stdin.addListener("data", function(data) {
     }
   } else {
     if(prevCommand == 1){
-      axios.post("http://"+input+"/ewallet/ping").then(function(response){
+      axios.post("http://"+input+":80/ewallet/ping").then(function(response){
         console.log(response.data)
         prevCommand = 0
       })
     } else if(prevCommand == 2){
       var params = input.split(',')
-      axios.post("http://"+params[0]+"/ewallet/register", {
+      axios.post("http://"+params[0]+":80/ewallet/register", {
         user_id: params[1],
         nama : params[2]
       }).then(function(response){
@@ -56,7 +56,7 @@ stdin.addListener("data", function(data) {
       })
     } else if(prevCommand == 3){
       var params = input.split(',')
-      axios.post("http://"+params[0]+"/ewallet/getSaldo", {
+      axios.post("http://"+params[0]+":80/ewallet/getSaldo", {
         user_id: params[1]
       }).then(function(response){
         console.log(response.data)
@@ -69,7 +69,7 @@ stdin.addListener("data", function(data) {
       })
     } else if(prevCommand == 5){
       var params = input.split(',')
-      axios.post("http://"+params[0]+"/ewallet/transfer", {
+      axios.post("http://"+params[0]+":80/ewallet/transfer", {
         user_id: params[2],
         nilai: params[1]
       }).then(function(response){
@@ -94,7 +94,7 @@ stdin.addListener("data", function(data) {
       })
     } else if(prevCommand == 4){
       var params = input.split(',')
-      axios.post("http://"+params[0]+"/ewallet/getTotalSaldo", {
+      axios.post("http://"+params[0]+":80/ewallet/getTotalSaldo", {
         user_id: params[1]
       }).then(function(response){
         console.log(response.data)

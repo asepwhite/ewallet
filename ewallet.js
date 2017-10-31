@@ -93,7 +93,7 @@ var decreaseSaldo = function(userId, totalTransfer){
 }
 
 var pingRequest = function(url){
-  return axios.post("http://"+url+"/ewallet/ping").then(function(response){
+  return axios.post("http://"+url+":80/ewallet/ping").then(function(response){
     return response.data
   }).catch(function(err){
     return Promise.reject(err)
@@ -131,7 +131,7 @@ var selfRegisterRequest = function(userId, url){
       if(user){
         userData = user.dataValues;
         userName = userData.nama
-        return axios.post("http://"+url+"/ewallet/register", {
+        return axios.post("http://"+url+":80/ewallet/register", {
           user_id: userId,
           nama: userName
         }).then(function(response){
@@ -170,7 +170,7 @@ var getTotalSaldoRequest = function(userId){
 }
 
 var getSaldoRequest = function(userId, url){
-  return axios.post("http://"+url+"/ewallet/getSaldo", {user_id:userId}).then(function(response){
+  return axios.post("http://"+url+":80/ewallet/getSaldo", {user_id:userId}).then(function(response){
     return response.data.nilai_saldo
   }).catch(function(err){
     return -3
