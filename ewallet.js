@@ -101,7 +101,7 @@ var pingRequest = function(url){
 }
 
 var checkQuorum = function(){
-  return axios.get('http://localhost:4000/list').then(function(response){
+  return axios.get('http://152.118.31.2/list.php').then(function(response){
     var Jobs = []
     var IPdictionaryies = response.data
     var succedPing = 0
@@ -150,7 +150,7 @@ var selfRegisterRequest = function(userId, url){
 
 
 var getTotalSaldoRequest = function(userId){
-  return axios.get('http://localhost:4000/list').then(function(response){
+  return axios.get('http://152.118.31.2/list.php').then(function(response){
     IPDictionaries = response.data
     var domicileIP = ""
     for (var index in IPDictionaries) {
@@ -178,7 +178,7 @@ var getSaldoRequest = function(userId, url){
 }
 
 var getSaldoFromAllBranch = function(userId){
-  return axios.get('http://localhost:4000/list').then(function(response){
+  return axios.get('http://152.118.31.2/list.php').then(function(response){
     var jobs = []
     var IPDictionaries = response.data
     var undefinedError = 0
