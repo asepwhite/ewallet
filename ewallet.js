@@ -68,6 +68,31 @@ var transferSaldo = function(userId, totalTransfer){
   })
 }
 
+var decreaseSaldo = function(userId, totalTransfer){
+  totalTransfer = parseInt(totalTransfer)
+  console.log(totalTransfer+" total transfer")
+  if(totalTransfer < 0 || totalTransfer > 1000000000){
+      return Promise.resolve(-5)
+  }
+  return sequelize.sync().then(function(){
+    return User.findOne({ where: {npm : userId}}).then(function(user){
+      if(user){
+        userData = user.dataValues;
+        updatedSaldo = userData.saldo-totalTransfer
+        user.set('saldo', updatedSaldo)
+        user.save()
+        return updatedSaldo;
+      } else {
+        return -1
+      }
+    }).catch(function(err){
+      return -4
+    });
+  }).catch(function(){
+    return -4
+  })
+}
+
 var pingRequest = function(url){
   return axios.post(url).then(function(response){
     return response.data
@@ -228,6 +253,7 @@ module.exports = {
   makePingRequest : pingRequest,
   checkQuorum : checkQuorum,
   getTotalSaldo: getTotalSaldo,
+  decreaseSaldo : decreaseSaldo,
   test : function(){
     return "1"
   }

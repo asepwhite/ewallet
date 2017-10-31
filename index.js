@@ -5,6 +5,104 @@ var Promise = require("bluebird");
 const bodyParser = require('body-parser')
 const jsonParser = bodyParser.json();
 const ewallet = require('./ewallet')
+var stdin = process.openStdin()
+//CLi
+function callOpeningSentences(){
+  console.log("=====Selamat datang di ewallet cabang bank Akbar=====")
+  console.log("Berikut adalah beberapa menu yang dapat anda gunakan")
+  console.log("1.Ping")
+  console.log("2.Register")
+  console.log("3.Get Saldo")
+  console.log("4.Get Total Saldo")
+  console.log("5.Transfer")
+  console.log("6.Exit")
+}
+
+callOpeningSentences()
+var prevCommand = 0
+stdin.addListener("data", function(data) {
+  var input = data.toString().trim()
+  if(prevCommand == 0){
+    if(input == 1){
+      prevCommand = 1
+      console.log("Silahkan masukan IP untuk di ping: ")
+    } else if(input == 2){
+      prevCommand = 2
+      console.log("Silahkan masukan url, npm dan nama untuk di register dengan format (url,npm,nama): ")
+    } else if(input == 3){
+      prevCommand = 3
+      console.log("Silahkan masukan url, dan user_id dengan format (url,user_id): ")
+    } else if(input == 4){
+      prevCommand = 4
+      console.log("Silahkan masukan url, user_id dengan format (url,user_id): ")
+    } else if(input == 5){
+      prevCommand = 5
+      console.log("Silahkan masukan url, nilai dan user_id dengan format (url, nilai, user_id): ")
+    }
+  } else {
+    if(prevCommand == 1){
+      axios.post(input+"/ewallet/ping").then(function(response){
+        console.log(response.data)
+        prevCommand = 0
+      })
+    } else if(prevCommand == 2){
+      var params = input.split(',')
+      axios.post(params[0]+"/ewallet/register", {
+        user_id: params[1],
+        nama : params[2]
+      }).then(function(response){
+        console.log(response.data)
+        prevCommand = 0
+      })
+    } else if(prevCommand == 3){
+      var params = input.split(',')
+      axios.post(params[0]+"/ewallet/getSaldo", {
+        user_id: params[1]
+      }).then(function(response){
+        console.log(response.data)
+        if(response.data.nilai_saldo == -1){
+            prevCommand = 2
+            console.log("Silahkan masukan url, npm dan nama untuk di register dengan format (url,npm,nama): ")
+        } else {
+          prevCommand = 0
+        }
+      })
+    } else if(prevCommand == 5){
+      var params = input.split(',')
+      axios.post(params[0]+"/ewallet/transfer", {
+        user_id: params[2],
+        nilai: params[1]
+      }).then(function(response){
+        if(response.data.nilai_saldo == -1){
+            prevCommand = 2
+            console.log("Silahkan masukan url, npm dan nama untuk di register dengan format (url,npm,nama): ")
+        } else if (response.data.nilai_saldo < 0){
+            console.log(response.data.nilai_saldo)
+            prevCommand = 0
+        } else {
+            ewallet.decreaseSaldo(params[2], params[1]).then(function(response){
+              console.log("Sisa saldo : ", response)
+              console.log("Status transfer 1")
+              prevCommand = 0
+            })
+        }
+      })
+    } else if(prevCommand == 4){
+      var params = input.split(',')
+      axios.post(params[0]+"/ewallet/getTotalSaldo", {
+        user_id: params[1]
+      }).then(function(response){
+        console.log(response.data)
+        prevCommand = 0
+      })
+    }
+  }
+});
+
+
+
+
+
 
 //API
 app.post('/ewallet/ping', jsonParser, function(req, res){
