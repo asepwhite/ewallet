@@ -107,14 +107,16 @@ var checkQuorum = function(){
     var succedPing = 0
     var failedPing = 0
     for (var index in IPdictionaryies) {
-      var job = pingRequest(IPdictionaryies[index].ip).then(function(response){
-        succedPing += 1
-        return Promise.resolve(1)
-      }).catch(function(err){
-        failedPing += 1
-        return Promise.resolve(1)
-      })
-      Jobs.push(job)
+      if(IPdictionaryies[index].npm != '0806444524'){
+        var job = pingRequest(IPdictionaryies[index].ip).then(function(response){
+          succedPing += 1
+          return Promise.resolve(1)
+        }).catch(function(err){
+          failedPing += 1
+          return Promise.resolve(1)
+        })
+        Jobs.push(job)
+      }
     }
     return Promise.all(Jobs).then(function(){
       var output = {}
