@@ -41,7 +41,7 @@ stdin.addListener("data", function(data) {
     }
   } else {
     if(prevCommand == 1){
-      axios.post("http://"+input+":80/ewallet/ping").then(function(response){
+      axios.post("http://"+input+":80/ewallet/ping", {timeout: 3000}).then(function(response){
         console.log(response.data)
         prevCommand = 0
       })
@@ -49,7 +49,8 @@ stdin.addListener("data", function(data) {
       var params = input.split(',')
       axios.post("http://"+params[0]+":80/ewallet/register", {
         user_id: params[1],
-        nama : params[2]
+        nama : params[2],
+        timeout: 3000
       }).then(function(response){
         console.log(response.data)
         prevCommand = 0
@@ -57,7 +58,8 @@ stdin.addListener("data", function(data) {
     } else if(prevCommand == 3){
       var params = input.split(',')
       axios.post("http://"+params[0]+":80/ewallet/getSaldo", {
-        user_id: params[1]
+        user_id: params[1],
+        timeout: 3000
       }).then(function(response){
         console.log(response.data)
         if(response.data.nilai_saldo == -1){
@@ -71,7 +73,8 @@ stdin.addListener("data", function(data) {
       var params = input.split(',')
       axios.post("http://"+params[0]+":80/ewallet/transfer", {
         user_id: params[2],
-        nilai: params[1]
+        nilai: params[1],
+        timeout: 3000
       }).then(function(response){
         if(response.data.nilai_saldo == -1){
             prevCommand = 2
@@ -95,7 +98,8 @@ stdin.addListener("data", function(data) {
     } else if(prevCommand == 4){
       var params = input.split(',')
       axios.post("http://"+params[0]+":80/ewallet/getTotalSaldo", {
-        user_id: params[1]
+        user_id: params[1],
+        timeout: 3000
       }).then(function(response){
         console.log(response.data)
         prevCommand = 0
@@ -213,7 +217,7 @@ app.post('/ewallet/getTotalSaldo', jsonParser, function(req, res){
 
 app.get('/customQuorum', jsonParser, function(req,res){
   var output = []
-  axios.get('http://152.118.31.2/list.php').then(function(response){
+  axios.get('http://152.118.31.2/list.php', {timeout: 3000}).then(function(response){
     var IPDictionaries = response.data
       for (var index in IPDictionaries) {
           if(IPDictionaries[index].npm == 1406543605 || IPDictionaries[index].npm == 1406574296 || IPDictionaries[index].npm == 1406578275) {

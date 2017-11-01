@@ -93,7 +93,7 @@ var decreaseSaldo = function(userId, totalTransfer){
 }
 
 var pingRequest = function(url){
-  return axios.post("http://"+url+":80/ewallet/ping").then(function(response){
+  return axios.post("http://"+url+":80/ewallet/ping", {timeout: 3000}).then(function(response){
     return response.data
   }).catch(function(err){
     return Promise.reject(err)
@@ -101,7 +101,7 @@ var pingRequest = function(url){
 }
 
 var checkQuorum = function(){
-  return axios.get('http://152.118.31.2/list.php').then(function(response){
+  return axios.get('http://152.118.31.2/list.php', {timeout: 3000}).then(function(response){
     var Jobs = []
     var IPdictionaryies = response.data
     var succedPing = 0
@@ -133,7 +133,8 @@ var selfRegisterRequest = function(userId, url){
         userName = userData.nama
         return axios.post("http://"+url+":80/ewallet/register", {
           user_id: userId,
-          nama: userName
+          nama: userName,
+          timeout: 3000
         }).then(function(response){
           return response.status_register
         }).catch(function(err){
@@ -150,7 +151,7 @@ var selfRegisterRequest = function(userId, url){
 
 
 var getTotalSaldoRequest = function(userId){
-  return axios.get('http://152.118.31.2/list.php').then(function(response){
+  return axios.get('http://152.118.31.2/list.php', {timeout: 3000}).then(function(response){
     IPDictionaries = response.data
     var domicileIP = ""
     for (var index in IPDictionaries) {
@@ -161,7 +162,10 @@ var getTotalSaldoRequest = function(userId){
     if(!domicileIP){
       return -1;
     }
-    return axios.post("http://"+domicileIP+'/ewallet/getTotalSaldo', {user_id : userId}).then(function(response){
+    return axios.post("http://"+domicileIP+'/ewallet/getTotalSaldo', {
+      user_id : userId,
+      timeout: 3000
+    }).then(function(response){
       return response.data.nilai_saldo
     }).catch(function(err){
       return -3
@@ -170,7 +174,10 @@ var getTotalSaldoRequest = function(userId){
 }
 
 var getSaldoRequest = function(userId, url){
-  return axios.post("http://"+url+":80/ewallet/getSaldo", {user_id:userId}).then(function(response){
+  return axios.post("http://"+url+":80/ewallet/getSaldo", {
+    user_id:userId,
+    timeout: 3000
+  }).then(function(response){
     return response.data.nilai_saldo
   }).catch(function(err){
     return -3
@@ -178,7 +185,7 @@ var getSaldoRequest = function(userId, url){
 }
 
 var getSaldoFromAllBranch = function(userId){
-  return axios.get('http://152.118.31.2/list.php').then(function(response){
+  return axios.get('http://152.118.31.2/list.php', {timeout: 3000}).then(function(response){
     var jobs = []
     var IPDictionaries = response.data
     var undefinedError = 0
