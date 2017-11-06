@@ -96,7 +96,7 @@ var pingRequest = function(url){
   return axios.post("http://"+url+":80/ewallet/ping", {timeout: 3000}).then(function(response){
     return response.data
   }).catch(function(err){
-    return Promise.reject(err)
+    return Promise.resolve(-1)
   })
 }
 
@@ -110,7 +110,11 @@ var checkQuorum = function(){
       if(IPdictionaryies[index].npm != '0806444524'){
         console.log(IPdictionaryies[index].npm)
         var job = pingRequest(IPdictionaryies[index].ip).then(function(response){
-          succedPing += 1
+          if(response.data.pong == '1'){
+            succedPing += 1
+          } else {
+            failedPing += 1
+          }
           return Promise.resolve(1)
         }).catch(function(err){
           failedPing += 1
