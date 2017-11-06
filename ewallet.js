@@ -107,7 +107,8 @@ var checkQuorum = function(){
     var succedPing = 0
     var failedPing = 0
     for (var index in IPdictionaryies) {
-      if(IPdictionaryies[index].npm != '0806444524'){
+      // IPdictionaryies[index].npm != '0806444524'
+      if(index < 5){
         console.log(IPdictionaryies[index].npm)
         var job = pingRequest(IPdictionaryies[index].ip).then(function(response){
           if(response.data.pong == '1'){
