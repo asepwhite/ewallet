@@ -50,7 +50,7 @@ stdin.addListener("data", function(data) {
       axios({
         method:'post',
         url:"http://"+params[0]+":80/ewallet/register",
-        timeout:3000,
+        timeout:10000,
         data : {
           user_id: params[1],
           nama : params[2]
@@ -64,7 +64,7 @@ stdin.addListener("data", function(data) {
       axios({
         method:'post',
         url:"http://"+params[0]+":80/ewallet/getSaldo",
-        timeout:3000,
+        timeout:10000,
         data : {
           user_id: params[1]
         }
@@ -82,7 +82,7 @@ stdin.addListener("data", function(data) {
       axios({
         method:'post',
         url:"http://"+params[0]+":80/ewallet/transfer",
-        timeout:3000,
+        timeout:10000,
         data : {
           user_id: params[2],
           nilai: params[1]
@@ -112,7 +112,7 @@ stdin.addListener("data", function(data) {
       axios({
         method:'post',
         url:"http://"+params[0]+":80/ewallet/getTotalSaldo",
-        timeout:3000,
+        timeout:10000,
         data : {
           user_id: params[1]
         }
