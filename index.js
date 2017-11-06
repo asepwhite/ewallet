@@ -236,6 +236,16 @@ app.get('/quorum', function(req,res){
   })
 })
 
+app.get('/test', function(req, res){
+  axios.post("http://"+'10.24.12.17'+":80/ewallet/ping", {timeout: 3000}).then(function(response){
+    console.log("HA!")
+    return response.data
+  }).catch(function(err){
+    console.log("HI!")
+    return Promise.resolve(-1)
+  })
+})
+
 
 app.listen(80, function(){
   console.log('app listen on port 80')
