@@ -112,7 +112,7 @@ stdin.addListener("data", function(data) {
       axios({
         method:'post',
         url:"http://"+params[0]+":80/ewallet/getTotalSaldo",
-        timeout:10000,
+        timeout:999999999999999999,
         data : {
           user_id: params[1]
         }
