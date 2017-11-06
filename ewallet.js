@@ -93,10 +93,14 @@ var decreaseSaldo = function(userId, totalTransfer){
 }
 
 var pingRequest = function(url){
-  return axios.post("http://"+url+":80/ewallet/ping", {timeout: 3000}).then(function(response){
+  return axios({
+    method:'post',
+    url:"http://"+url+":80/ewallet/ping",
+    timeout:3000
+  }).then(function(response){
     return response.data
   }).catch(function(err){
-    return Promise.resolve(-1)
+    return Promise.reject(err)
   })
 }
 
@@ -107,22 +111,15 @@ var checkQuorum = function(){
     var succedPing = 0
     var failedPing = 0
     for (var index in IPdictionaryies) {
-      // IPdictionaryies[index].npm != '0806444524'
-      if(index < 5){
-        console.log(IPdictionaryies[index].npm)
-        var job = pingRequest(IPdictionaryies[index].ip).then(function(response){
-          if(response.data.pong == '1'){
-            succedPing += 1
-          } else {
-            failedPing += 1
-          }
-          return Promise.resolve(1)
-        }).catch(function(err){
-          failedPing += 1
-          return Promise.resolve(1)
-        })
-        Jobs.push(job)
-      }
+      // console.log(IPdictionaryies[index].npm)
+      var job = pingRequest(IPdictionaryies[index].ip).then(function(response){
+        succedPing += 1
+        return Promise.resolve(1)
+      }).catch(function(err){
+        failedPing += 1
+        return Promise.resolve(1)
+      })
+      Jobs.push(job)
     }
     return Promise.all(Jobs).then(function(){
       var output = {}
@@ -139,10 +136,14 @@ var selfRegisterRequest = function(userId, url){
       if(user){
         userData = user.dataValues;
         userName = userData.nama
-        return axios.post("http://"+url+":80/ewallet/register", {
-          user_id: userId,
-          nama: userName,
-          timeout: 3000
+        return axios({
+          method:'post',
+          url:"http://"+url+":80/ewallet/register",
+          timeout:3000,
+          data : {
+            user_id: userId,
+            nama: userName
+          }
         }).then(function(response){
           return response.status_register
         }).catch(function(err){
@@ -170,9 +171,13 @@ var getTotalSaldoRequest = function(userId){
     if(!domicileIP){
       return -1;
     }
-    return axios.post("http://"+domicileIP+'/ewallet/getTotalSaldo', {
-      user_id : userId,
-      timeout: 3000
+    return axios({
+      method:'post',
+      url:"http://"+domicileIP+'/ewallet/getTotalSaldo',
+      timeout:3000,
+      data : {
+        user_id: userId,
+      }
     }).then(function(response){
       return response.data.nilai_saldo
     }).catch(function(err){
@@ -182,9 +187,13 @@ var getTotalSaldoRequest = function(userId){
 }
 
 var getSaldoRequest = function(userId, url){
-  return axios.post("http://"+url+":80/ewallet/getSaldo", {
-    user_id:userId,
-    timeout: 3000
+  return axios({
+    method:'post',
+    url:"http://"+url+":80/ewallet/getSaldo",
+    timeout:3000,
+    data : {
+      user_id: userId,
+    }
   }).then(function(response){
     return response.data.nilai_saldo
   }).catch(function(err){

@@ -41,25 +41,33 @@ stdin.addListener("data", function(data) {
     }
   } else {
     if(prevCommand == 1){
-      axios.post("http://"+input+":80/ewallet/ping", {timeout: 3000}).then(function(response){
+      axios({method:'post', url:"http://"+input+":80/ewallet/ping", timeout:3000}).then(function(response){
         console.log(response.data)
         prevCommand = 0
       })
     } else if(prevCommand == 2){
       var params = input.split(',')
-      axios.post("http://"+params[0]+":80/ewallet/register", {
-        user_id: params[1],
-        nama : params[2],
-        timeout: 3000
+      axios({
+        method:'post',
+        url:"http://"+params[0]+":80/ewallet/register",
+        timeout:3000,
+        data : {
+          user_id: params[1],
+          nama : params[2]
+        }
       }).then(function(response){
         console.log(response.data)
         prevCommand = 0
       })
     } else if(prevCommand == 3){
       var params = input.split(',')
-      axios.post("http://"+params[0]+":80/ewallet/getSaldo", {
-        user_id: params[1],
-        timeout: 3000
+      axios({
+        method:'post',
+        url:"http://"+params[0]+":80/ewallet/getSaldo",
+        timeout:3000,
+        data : {
+          user_id: params[1]
+        }
       }).then(function(response){
         console.log(response.data)
         if(response.data.nilai_saldo == -1){
@@ -71,10 +79,14 @@ stdin.addListener("data", function(data) {
       })
     } else if(prevCommand == 5){
       var params = input.split(',')
-      axios.post("http://"+params[0]+":80/ewallet/transfer", {
-        user_id: params[2],
-        nilai: params[1],
-        timeout: 3000
+      axios({
+        method:'post',
+        url:"http://"+params[0]+":80/ewallet/transfer",
+        timeout:3000,
+        data : {
+          user_id: params[2],
+          nilai: params[1]
+        }
       }).then(function(response){
         if(response.data.nilai_saldo == -1){
             prevCommand = 2
@@ -97,9 +109,13 @@ stdin.addListener("data", function(data) {
       })
     } else if(prevCommand == 4){
       var params = input.split(',')
-      axios.post("http://"+params[0]+":80/ewallet/getTotalSaldo", {
-        user_id: params[1],
-        timeout: 3000
+      axios({
+        method:'post',
+        url:"http://"+params[0]+":80/ewallet/getTotalSaldo",
+        timeout:3000,
+        data : {
+          user_id: params[1]
+        }
       }).then(function(response){
         console.log(response.data)
         prevCommand = 0
@@ -235,17 +251,6 @@ app.get('/quorum', function(req,res){
     console.log(err)
   })
 })
-
-app.get('/test', function(req, res){
-  axios.post("http://"+'10.24.12.17'+":80/ewallet/ping", {timeout: 3000}).then(function(response){
-    console.log("HA!")
-    return response.data
-  }).catch(function(err){
-    console.log("HI!")
-    return Promise.resolve(-1)
-  })
-})
-
 
 app.listen(80, function(){
   console.log('app listen on port 80')
