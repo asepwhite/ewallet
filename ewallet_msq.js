@@ -18,6 +18,7 @@ function sendPingMessage(ch, ex)
     currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
     var message = '{"action":"ping","npm":"1406623064","ts":"'+currTime+'"}'
     ch.publish(ex, '', new Buffer(message));
+    console.log("SUCCES SENDING PING");
   }, 5000);
 }
 
