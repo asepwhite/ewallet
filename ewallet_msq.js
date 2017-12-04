@@ -52,7 +52,7 @@ function initPingConsumer(){
           } catch(e) {
             console.log("error parsing JSON, logging message")
             console.log("=========")
-            console..log(strMessage);
+            console.log(strMessage);
             console.log("*********")
           }
         }, {noAck: true});
