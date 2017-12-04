@@ -13,7 +13,7 @@ function initPingPublisher() {
 
 function sendPingMessage(ch, ex)
 {
-  setInterval(function(ch, ex){
+  setInterval(function(){
     var currTime = new Date(Date.now());
     currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
     var message = '{"action":"ping","npm":"1406623064","ts":"'+currTime+'"}'
