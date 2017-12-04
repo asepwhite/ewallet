@@ -3,11 +3,8 @@ function initPingPublisher() {
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var ex = 'EX_PING';
-      var msg = process.argv.slice(2).join(' ') || 'Hello World!';
-
       ch.assertExchange(ex, 'fanout', {durable: false});
-      ch.publish(ex, '', new Buffer(msg));
-      console.log(" [x] Sent %s", msg);
+      sendPingMessage(ch, ex);
     });
   });
 }
@@ -15,7 +12,9 @@ function initPingPublisher() {
 function sendPingMessage(ch, ex)
 {
   setInterval(function(ch, ex){
-    var message = "test hahaha"
+    var currTime = new Date(Date.now());
+    currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+    var message = '{"action":"ping","npm":"1406623064","ts":"'+currTime+'"}'
     ch.publish(ex, '', new Buffer(message));
   }, 5000);
 }
