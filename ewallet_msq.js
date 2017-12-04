@@ -1,3 +1,17 @@
+const Sequelize = require('sequelize');
+const sequelize = new Sequelize('sisdis', 'root', 'rootroot', {
+  host: 'localhost',
+  dialect: 'mysql'
+});
+const Pings = sequelize.define('pings', {
+  npm: { type: Sequelize.INTEGER,  primaryKey: true },
+  time: { type: Sequelize.DATE}
+});
+const User = sequelize.define('users', {
+  npm: { type: Sequelize.INTEGER,  unique: true },
+  nama: Sequelize.STRING,
+  saldo: Sequelize.INTEGER
+});
 var amqp = require('amqplib/callback_api');
 var moment = require('moment')
 
@@ -31,16 +45,22 @@ function initPingConsumer(){
         console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", q.queue);
         ch.bindQueue(q.queue, ex, '');
         ch.consume(q.queue, function(msg) {
-          console.log(" consumer 1 : ", msg.content.toString());
-        }, {noAck: true});
-        ch.bindQueue(q.queue, ex, '');
-        ch.consume(q.queue, function(msg) {
-          console.log(" consumer 2 : ", msg.content.toString());
+          var strMessage = msg.content.toString();
+          try{
+            var message = JSON.parse(strMessage)
+            Pings.findOrCreate({where: {npm: message.npm}, defaults: {time: message.ts}})
+          } catch(e) {
+            console.log("error parsing JSON, logging message")
+            console.log("=========")
+            console..log(strMessage);
+            console.log("*********")
+          }
         }, {noAck: true});
       });
     });
   });
 }
+
 initPingPublisher();
 console.log("init consumer");
 initPingConsumer();
