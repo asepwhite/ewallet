@@ -31,7 +31,11 @@ function initPingConsumer(){
         console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", q.queue);
         ch.bindQueue(q.queue, ex, '');
         ch.consume(q.queue, function(msg) {
-          console.log(" [x] %s", msg.content.toString());
+          console.log(" consumer 1 : ", msg.content.toString());
+        }, {noAck: true});
+        ch.bindQueue(q.queue, ex, '');
+        ch.consume(q.queue, function(msg) {
+          console.log(" consumer 2 : ", msg.content.toString());
         }, {noAck: true});
       });
     });
