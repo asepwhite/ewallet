@@ -34,4 +34,6 @@ function initPingConsumer(){
     });
   });
 }
+initPingPublisher();
+console.log("init consumer");
 initPingConsumer();
