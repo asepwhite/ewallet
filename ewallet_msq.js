@@ -1,4 +1,6 @@
 var amqp = require('amqplib/callback_api');
+var moment = require('moment')
+
 function initPingPublisher() {
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
