@@ -61,6 +61,49 @@ function initPingConsumer(){
   });
 }
 
-initPingPublisher();
-console.log("init consumer");
-initPingConsumer();
+function initRegisterPublisher(routingKey, userID, name, senderID){
+  amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
+  conn.createChannel(function(err, ch) {
+    var message = {};
+    message.action = "register";
+    message.user_id = userID;
+    message.nama = name;
+    message.sender_id = senderID;
+    message.type = "request";
+    var currTime = new Date(Date.now());
+    currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+    message.ts = currTime;
+    message = JSON.stringify(message);
+    var ex = 'EX_REGISTER';
+    var routingKey = routingKey;
+    ch.assertExchange(ex, 'direct', {durable: false});
+    ch.publish(ex, routingKey, new Buffer(msg));
+    console.log(" [x] Sent a message with register key %s: and message'%s'", severity, msg);
+  });
+  setTimeout(function() { conn.close(); process.exit(0) }, 500);
+  }
+}
+
+function initRegisterConsumer(){
+  amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
+    conn.createChannel(function(err, ch) {
+      var ex = 'EX_REGISTER';
+      var routingKey = 'REQ_1406623064'
+      ch.assertExchange(ex, 'direct', {durable: false});
+      ch.assertQueue('', {exclusive: true}, function(err, q) {
+        console.log(' [*] Waiting for logs. To exit press CTRL+C');
+        ch.bindQueue(q.queue, ex, routingKey);
+
+        ch.consume(q.queue, function(msg) {
+          console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
+        }, {noAck: true});
+      });
+    });
+  });
+}
+initRegisterConsumer()
+initRegisterPublisher()
+
+// initPingPublisher();
+// console.log("init consumer");
+// initPingConsumer();
