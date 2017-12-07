@@ -81,7 +81,7 @@ function initRegisterPublisher(routingKey, userID, name, senderID){
     console.log(" [x] Sent a message with register key %s: and message'%s'", severity, msg);
   });
   setTimeout(function() { conn.close(); process.exit(0) }, 500);
-  }
+  })
 }
 
 function initRegisterConsumer(){
@@ -101,9 +101,9 @@ function initRegisterConsumer(){
     });
   });
 }
-initRegisterConsumer()
-initRegisterPublisher()
+// initRegisterConsumer()
+// initRegisterPublisher()
 
-// initPingPublisher();
-// console.log("init consumer");
-// initPingConsumer();
+initPingPublisher();
+console.log("init consumer");
+initPingConsumer();
