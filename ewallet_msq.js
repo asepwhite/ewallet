@@ -174,7 +174,7 @@ function initGetSaldoRespPublisher(routingKey, nilai_saldo, ts){
       var ex = 'EX_GET_SALDO';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
-      // console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
@@ -191,7 +191,7 @@ function initGetSaldoConsumer(){
         ch.bindQueue(q.queue, ex, routingKey);
         ch.consume(q.queue, function(msg) {
           console.log("Reading message data");
-          // console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
+          console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
           var strMessage = msg.content.toString();
           try{
             var message = JSON.parse(strMessage)
