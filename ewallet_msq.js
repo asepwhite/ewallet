@@ -98,6 +98,7 @@ function initRegisterConsumer(){
           var strMessage = msg.content.toString();
           try{
             var message = JSON.parse(strMessage)
+            console.log(message.user_id);
             // ewallet.registerUser(message.user_id, message.nama).then(function(result){
             //   console.log("INI ADALAH HASIL "+ result);
             // })
