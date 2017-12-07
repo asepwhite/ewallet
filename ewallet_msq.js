@@ -85,7 +85,7 @@ function initRegisterPublisher(routingKey, userID, name, senderID){
     ch.publish(ex, routingKey, new Buffer(message));
     console.log(" [x] Sent a message with register key %s: and message'%s'", routingKey, message);
   });
-  setTimeout(function() { conn.close(); process.exit(0) }, 500);
+  // setTimeout(function() { conn.close(); process.exit(0) }, 500);
   })
 }
 
@@ -108,7 +108,10 @@ function initRegisterConsumer(){
   });
 }
 initRegisterConsumer()
-initRegisterPublisher('REQ_1406623064', '1406623064', 'Akbar Septriyan', '1406623064')
+setInterval(function(){
+    initRegisterPublisher('REQ_1406623064', '1406623064', 'Akbar Septriyan', '1406623064')
+}, 5000);
+
 
 // initPingPublisher();
 // console.log("init consumer");
