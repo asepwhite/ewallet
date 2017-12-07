@@ -191,7 +191,7 @@ function initGetSaldoConsumer(){
         ch.bindQueue(q.queue, ex, routingKey);
         ch.consume(q.queue, function(msg) {
           console.log("Reading message data");
-          console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
+          // console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
           var strMessage = msg.content.toString();
           try{
             var message = JSON.parse(strMessage)
