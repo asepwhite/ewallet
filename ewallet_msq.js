@@ -247,7 +247,7 @@ function initTransferPublisher(routingKey, userID, senderID, nilai){
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
       transferQueue.push(nilai)
-      // console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
@@ -264,7 +264,7 @@ function initTransferRespPublisher(routingKey, status_transfer, ts){
       var ex = 'EX_TRANSFER';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
-      // console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
