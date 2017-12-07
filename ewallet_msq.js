@@ -157,7 +157,7 @@ function initGetSaldoPublisher(routingKey, userID, senderID){
       var ex = 'EX_GET_SALDO';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
-      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+      // console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
@@ -174,7 +174,7 @@ function initGetSaldoRespPublisher(routingKey, nilai_saldo, ts){
       var ex = 'EX_GET_SALDO';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
-      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+      // console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
@@ -223,7 +223,7 @@ function initGetSaldoConsumer(){
 }
 
 
-initGetSaldoConsumer()()
+initGetSaldoConsumer()
 setInterval(function(){
     initGetSaldoPublisher('REQ_1406623064', '1406623064', '1406623064')
 }, 5000);
