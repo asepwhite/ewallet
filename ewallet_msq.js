@@ -166,7 +166,7 @@ function initGetSaldoPublisher(routingKey, userID, senderID){
       var ex = 'EX_GET_SALDO';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
-      // console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
@@ -222,6 +222,7 @@ function initGetSaldoConsumer(){
                 console.log('REPONSE FROM ???, GET SALDO IS', message.nilai_saldo)
               }
             } else if(message.type == 'request')  {
+              console.log("test 123")
               ewallet.getSaldo(message.user_id).then(function(res){
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
