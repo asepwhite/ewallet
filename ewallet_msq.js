@@ -290,7 +290,7 @@ function initTransferConsumer(){
               console.log("Status Transfer adalah "+ message.status_transfer)
               if(message.status_transfer == 1){
                 ewallet.decreaseSaldo("1406623064", transferQueue.shift()).then(function(res){
-                  console.log("Saldo pada user "+ message.user_id+" telah berhasil dikurangi sebanyak "+message.nilai)
+                  console.log("Saldo pada user "+ "1406623064" +" telah berhasil dikurangi sebanyak "+transferQueue.shift())
                 }).catch(function(err){
                   console.log("*************")
                   console.log("Pengurangan saldo gagal, dengan user "+message.user_id+" dan saldo "+ message.nilai)
