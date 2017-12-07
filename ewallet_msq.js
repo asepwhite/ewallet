@@ -222,6 +222,12 @@ function initGetSaldoConsumer(){
   });
 }
 
+
+initGetSaldoConsumer()()
+setInterval(function(){
+    initGetSaldoPublisher('REQ_1406623064', '1406623064', '1406623064')
+}, 5000);
+
 // initRegisterConsumer()
 // setInterval(function(){
 //     initRegisterPublisher('REQ_1406623064', '1406623064', 'Akbar Septriyan', '1406623064')
