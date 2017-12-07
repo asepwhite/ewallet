@@ -400,7 +400,7 @@ function initGetTotalSaldoConsumer(){
               getTotalSaldoCounter = getTotalSaldoCounter + quourumNpm.length;
               for (var npm in quourumNpm) {
                 console.log("walalal")
-                initGetSaldoPublisher("REQ_"+quourumNpm[npm], "1406623064", "1406623064")
+                initGetSaldoPublisher("REQ_1406623064", "1406623064", "1406623064")
               }
             }
           } catch(e) {
@@ -417,6 +417,7 @@ function initGetTotalSaldoConsumer(){
 }
 
 var flagTotal = 1;
+initGetSaldoConsumer()
 initGetTotalSaldoConsumer()
 setInterval(function(){
     if(flagTotal == 1) {
