@@ -96,6 +96,7 @@ function initRegisterConsumer(){
           console.log("Reading message data");
           console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
           try{
+            msg = msg.content.toString();
             var message = JSON.parse(msg)
             ewallet.registerUser(message.user_id, message.nama).then(function(result){
               console.log("INI ADALAH HASIL "+ result);
