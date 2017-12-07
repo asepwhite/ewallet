@@ -115,7 +115,7 @@ function initRegisterConsumer(){
           var strMessage = msg.content.toString();
           try{
             var message = JSON.parse(strMessage)
-            if(message.action == 'response'){
+            if(message.type == 'response'){
               console.log('REPONSE FROM ???, STATUS REGISTER IS', message.status_register)
             }
             ewallet.register(message.user_id, message.nama).then(function(res){
