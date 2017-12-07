@@ -18,12 +18,12 @@ var registerUser = function registerUser(userId, name){
       nama: name,
       saldo: 0
     }).then(function(){
-      return 1
+      return Promise.resolve(1)
     }).catch(function(err){
-      return -4
+      return Promise.resolve(-4)
     });
   }).catch(function(err){
-    return -4;
+    return Promise.resolve(-4)
   });
 }
 

@@ -83,6 +83,23 @@ function initRegisterPublisher(routingKey, userID, name, senderID){
   })
 }
 
+function initRegisterRespPublisher(routingKey, status_register, ts){
+  amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
+    conn.createChannel(function(err, ch) {
+      var message = {};
+      message.action = "register";
+      message.type = "response";
+      message.status_register = status_register;
+      message.ts = ts;
+      message = JSON.stringify(message);
+      var ex = 'EX_REGISTER';
+      ch.assertExchange(ex, 'direct', {durable: true});
+      ch.publish(ex, routingKey, new Buffer(message));
+      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+    });
+  })
+}
+
 function initRegisterConsumer(){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
@@ -98,11 +115,18 @@ function initRegisterConsumer(){
           var strMessage = msg.content.toString();
           try{
             var message = JSON.parse(strMessage)
-            console.log(message.user_id);
-            registerUser(message.user_id, message.nama).then(function(res){
-                console.log("ini response sukses dari message ", res)
+            if(message.action == 'response'){
+              console.log('REPONSE FROM ???, STATUS REGISTER IS', message.status_register)
+            }
+            ewallet.register(message.user_id, message.nama).then(function(res){
+                var currTime = new Date(Date.now());
+                currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+                initRegisterRespPublisher("RESP_"+message.sender_id, res, currTime);
             }).catch(function(err){
                 console.log("ini log error dengan message error ", err)
+                var currTime = new Date(Date.now());
+                currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+                initRegisterRespPublisher("RESP_"+message.sender_id, res, currTime);
             })
           } catch(e) {
             console.log("error parsing JSON, logging message")
@@ -114,26 +138,6 @@ function initRegisterConsumer(){
         }, {noAck: true});
       });
     });
-  });
-}
-
-function registerUser(userId, name){
-  return sequelize.sync().then(function(){
-    console.log("MASUK SINI WEY")
-    return User.create({
-      npm: userId,
-      nama: name,
-      saldo: 0
-    }).then(function(){
-      console.log("MASUK SINI WEY 2")
-      return Promise.resolve(1)
-    }).catch(function(err){
-      console.log("MASUK SINI WEY 3")
-      return Promise.resolve(-4)
-    });
-  }).catch(function(err){
-    console.log("MASUK SINI WEY 4")
-    return Promise.resolve(-4)
   });
 }
 
