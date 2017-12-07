@@ -99,7 +99,11 @@ function initRegisterConsumer(){
           try{
             var message = JSON.parse(strMessage)
             console.log(message.user_id);
-            registerUser(message.user_id, message.nama)
+            registerUser(message.user_id, message.nama).then(function(res){
+                console.log("ini response sukses dari message ", res)
+            }).catch(function(err){
+                console.log("ini log error dengan message error ", err)
+            })
           } catch(e) {
             console.log("error parsing JSON, logging message")
             console.log("=========")
@@ -122,14 +126,14 @@ function registerUser(userId, name){
       saldo: 0
     }).then(function(){
       console.log("MASUK SINI WEY 2")
-      return 1
+      return Promise.resolve(1)
     }).catch(function(err){
       console.log("MASUK SINI WEY 3")
-      return -4
+      return Promise.resolve(-4)
     });
   }).catch(function(err){
     console.log("MASUK SINI WEY 4")
-    return -4;
+    return Promise.resolve(-4)
   });
 }
 
