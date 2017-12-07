@@ -2,7 +2,8 @@ const ewallet = require('./ewallet')
 const Sequelize = require('sequelize');
 const sequelize = new Sequelize('sisdis', 'root', 'rootroot', {
   host: 'localhost',
-  dialect: 'mysql'
+  dialect: 'mysql',
+  logging: false
 });
 const Pings = sequelize.define('pings', {
   npm: { type: Sequelize.INTEGER,  primaryKey: true },
