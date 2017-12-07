@@ -110,6 +110,8 @@ function initRegisterConsumer(){
       ch.assertQueue('', {exclusive: true}, function(err, q) {
         console.log(' [*] Waiting for logs. To exit press CTRL+C');
         ch.bindQueue(q.queue, ex, routingKey);
+        routingKey = 'RESP_1406623064'
+        ch.bindQueue(q.queue, ex, routingKey);
         ch.consume(q.queue, function(msg) {
           console.log("Reading message data");
           console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
@@ -190,6 +192,8 @@ function initGetSaldoConsumer(){
       ch.assertQueue('', {exclusive: true}, function(err, q) {
         console.log(' [*] Waiting for logs. To exit press CTRL+C');
         ch.bindQueue(q.queue, ex, routingKey);
+        routingKey = 'RESP_1406623064'
+        ch.bindQueue(q.queue, ex, routingKey);
         ch.consume(q.queue, function(msg) {
           console.log("Reading message data");
           console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
@@ -226,7 +230,7 @@ function initGetSaldoConsumer(){
 
 initGetSaldoConsumer()
 setInterval(function(){
-    initGetSaldoRespPublisher("RESP_"+"1406623064", "blalala", "blalalala2");
+    initGetSaldoPublisher("REQ_1406623064", "1406623064", "1406623064")
 }, 5000);
 
 // initRegisterConsumer()
