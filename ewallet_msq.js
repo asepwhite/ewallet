@@ -254,7 +254,7 @@ function initTransferRespPublisher(routingKey, status_transfer, ts){
       var message = {};
       message.action = "transfer";
       message.type = "response";
-      message.status_transfer = status_register;
+      message.status_transfer = status_transfer;
       message.ts = ts;
       message = JSON.stringify(message);
       var ex = 'EX_TRANSFER';
