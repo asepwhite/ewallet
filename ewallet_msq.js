@@ -78,7 +78,7 @@ function initRegisterPublisher(routingKey, userID, name, senderID){
       var ex = 'EX_REGISTER';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
-      // console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
@@ -117,17 +117,18 @@ function initRegisterConsumer(){
             var message = JSON.parse(strMessage)
             if(message.type == 'response'){
               console.log('REPONSE FROM ???, STATUS REGISTER IS', message.status_register)
+            } else if(message.type == 'request')  {
+              ewallet.register(message.user_id, message.nama).then(function(res){
+                  var currTime = new Date(Date.now());
+                  currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+                  initRegisterRespPublisher("RESP_"+message.sender_id, res, currTime);
+              }).catch(function(err){
+                  console.log("ini log error dengan message error ", err)
+                  var currTime = new Date(Date.now());
+                  currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+                  initRegisterRespPublisher("RESP_"+message.sender_id, res, currTime);
+              })
             }
-            ewallet.register(message.user_id, message.nama).then(function(res){
-                var currTime = new Date(Date.now());
-                currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-                initRegisterRespPublisher("RESP_"+message.sender_id, res, currTime);
-            }).catch(function(err){
-                console.log("ini log error dengan message error ", err)
-                var currTime = new Date(Date.now());
-                currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-                initRegisterRespPublisher("RESP_"+message.sender_id, res, currTime);
-            })
           } catch(e) {
             console.log("error parsing JSON, logging message")
             console.log("=========")
@@ -141,10 +142,90 @@ function initRegisterConsumer(){
   });
 }
 
-initRegisterConsumer()
-setInterval(function(){
-    initRegisterPublisher('REQ_1406623064', '1406623064', 'Akbar Septriyan', '1406623064')
-}, 5000);
+function initGetSaldoPublisher(routingKey, userID, senderID){
+  amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
+    conn.createChannel(function(err, ch) {
+      var message = {};
+      message.action = "get_saldo";
+      message.user_id = userID;
+      message.sender_id = senderID;
+      message.type = "request";
+      var currTime = new Date(Date.now());
+      currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+      message.ts = currTime;
+      message = JSON.stringify(message);
+      var ex = 'EX_GET_SALDO';
+      ch.assertExchange(ex, 'direct', {durable: true});
+      ch.publish(ex, routingKey, new Buffer(message));
+      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+    });
+  })
+}
+
+function initGetSaldoRespPublisher(routingKey, nilai_saldo, ts){
+  amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
+    conn.createChannel(function(err, ch) {
+      var message = {};
+      message.action = "get_saldo";
+      message.type = "response";
+      message.nilai_saldo = nilai_saldo;
+      message.ts = ts;
+      message = JSON.stringify(message);
+      var ex = 'EX_GET_SALDO';
+      ch.assertExchange(ex, 'direct', {durable: true});
+      ch.publish(ex, routingKey, new Buffer(message));
+      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+    });
+  })
+}
+
+
+function initGetSaldoConsumer(){
+  amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
+    conn.createChannel(function(err, ch) {
+      var ex = 'EX_GET_SALDO';
+      var routingKey = 'REQ_1406623064'
+      ch.assertExchange(ex, 'direct', {durable: true});
+      ch.assertQueue('', {exclusive: true}, function(err, q) {
+        console.log(' [*] Waiting for logs. To exit press CTRL+C');
+        ch.bindQueue(q.queue, ex, routingKey);
+        ch.consume(q.queue, function(msg) {
+          console.log("Reading message data");
+          console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
+          var strMessage = msg.content.toString();
+          try{
+            var message = JSON.parse(strMessage)
+            if(message.type == 'response'){
+              console.log('REPONSE FROM ???, GET SALDO IS', message.nilai_saldo)
+            } else if(message.type == 'request')  {
+              ewallet.getSaldo(message.user_id).then(function(res){
+                  var currTime = new Date(Date.now());
+                  currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+                  initGetSaldoRespPublisher("RESP_"+message.sender_id, res, currTime);
+              }).catch(function(err){
+                  console.log("ini log error dengan message error ", err)
+                  var currTime = new Date(Date.now());
+                  currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+                  initGetSaldoRespPublisher("RESP_"+message.sender_id, res, currTime);
+              })
+            }
+          } catch(e) {
+            console.log("error parsing JSON, logging message")
+            console.log("=========")
+            console.log(strMessage);
+            console.log("*********")
+          }
+
+        }, {noAck: true});
+      });
+    });
+  });
+}
+
+// initRegisterConsumer()
+// setInterval(function(){
+//     initRegisterPublisher('REQ_1406623064', '1406623064', 'Akbar Septriyan', '1406623064')
+// }, 5000);
 //
 //
 // initPingPublisher();
