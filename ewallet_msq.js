@@ -16,6 +16,7 @@ const User = sequelize.define('users', {
 });
 var amqp = require('amqplib/callback_api');
 var moment = require('moment')
+var transferQueue = []
 
 function initPingPublisher() {
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
@@ -91,6 +92,7 @@ function initRegisterRespPublisher(routingKey, status_register, ts){
       message.action = "register";
       message.type = "response";
       message.status_register = status_register;
+      message.sender_id = "1406623064";
       message.ts = ts;
       message = JSON.stringify(message);
       var ex = 'EX_REGISTER';
@@ -172,6 +174,7 @@ function initGetSaldoRespPublisher(routingKey, nilai_saldo, ts){
       message.action = "get_saldo";
       message.type = "response";
       message.nilai_saldo = nilai_saldo;
+      message.sender_id = "1406623064";
       message.ts = ts;
       message = JSON.stringify(message);
       var ex = 'EX_GET_SALDO';
@@ -243,6 +246,7 @@ function initTransferPublisher(routingKey, userID, senderID, nilai){
       var ex = 'EX_TRANSFER';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
+      transferQueue.push(nilai)
       // console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
@@ -284,13 +288,15 @@ function initTransferConsumer(){
             var message = JSON.parse(strMessage)
             if(message.type == 'response'){
               console.log("Status Transfer adalah "+ message.status_transfer)
-              ewallet.decreaseSaldo(message.user_id, message.nilai).then(function(res){
-                console.log("Saldo pada user "+ message.user_id+" telah berhasil dikurangi sebanyak "+message.nilai)
-              }).catch(function(err){
-                console.log("*************")
-                console.log("Pengurangan saldo gagal, dengan user "+message.user_id+" dan saldo "+ message.nilai)
-                console.log("*************")
-              });
+              if(message.status_transfer == 1){
+                ewallet.decreaseSaldo("1406623064", transferQueue.shift()).then(function(res){
+                  console.log("Saldo pada user "+ message.user_id+" telah berhasil dikurangi sebanyak "+message.nilai)
+                }).catch(function(err){
+                  console.log("*************")
+                  console.log("Pengurangan saldo gagal, dengan user "+message.user_id+" dan saldo "+ message.nilai)
+                  console.log("*************")
+                });
+              }
             } else if(message.type == 'request')  {
               ewallet.transfer(message.user_id, message.nilai).then(function(res){
                   var currTime = new Date(Date.now());
