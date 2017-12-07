@@ -213,6 +213,7 @@ function initGetSaldoConsumer(){
                 getTotalSaldoCounter = getTotalSaldoCounter - 1
                 if(getTotalSaldoCounter % 5 == 0){
                   console.log("TOTAL SALDO ADALAH "+getTotalSaldoQueue[parseInt(getTotalSaldoCounter/5)])
+                  console.log(getTotalSaldoQueue)
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
                   initGetTotalSaldoRespPublisher("RESP_1406623064", "1406623064", getTotalSaldoCounter, currTime)
