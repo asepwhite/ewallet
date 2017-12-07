@@ -18,6 +18,10 @@ var amqp = require('amqplib/callback_api');
 var moment = require('moment')
 var transferQueue = []
 
+var getTotalSaldoCounter = 0;
+var getTotalSaldoQueue = []
+var quourumNpm = ['1406623064', '1406623064', '1406623064', '1406623064', '1406623064']
+
 function initPingPublisher() {
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
@@ -204,7 +208,19 @@ function initGetSaldoConsumer(){
           try{
             var message = JSON.parse(strMessage)
             if(message.type == 'response'){
-              console.log('REPONSE FROM ???, GET SALDO IS', message.nilai_saldo)
+              if(getTotalSaldoCounter > 0){
+                getTotalSaldoQueue[parseInt(getTotalSaldoCounter/5) - 1] = getTotalSaldoQueue[parseInt(getTotalSaldoCounter/5)] + message.nilai_saldo
+                getTotalSaldoCounter = getTotalSaldoCounter - 1
+                if(getTotalSaldoCounter % 5 == 0){
+                  console.log("TOTAL SALDO ADALAH "+getTotalSaldoQueue[parseInt(getTotalSaldoCounter/5)])
+                  var currTime = new Date(Date.now());
+                  currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+                  initGetTotalSaldoRespPublisher("RESP_1406623064", "1406623064", getTotalSaldoCounter, currTime)
+                  getTotalSaldoQueue[parseInt(getTotalSaldoCounter/5)] = 0;
+                }
+              } else {
+                console.log('REPONSE FROM ???, GET SALDO IS', message.nilai_saldo)
+              }
             } else if(message.type == 'request')  {
               ewallet.getSaldo(message.user_id).then(function(res){
                   var currTime = new Date(Date.now());
@@ -294,7 +310,7 @@ function initTransferConsumer(){
                   console.log("Saldo pada user "+ "1406623064" +" telah berhasil dikurangi sebanyak "+nilaiTransfer)
                 }).catch(function(err){
                   console.log("*************")
-                  console.log("Pengurangan saldo gagal, dengan user "+message.user_id+" dan saldo "+ message.nilai)
+                  console.log("Pengurangan saldo gagal, dengan user 1406623064 "+" dan saldo "+ nilaiTransfer)
                   console.log("*************")
                 });
               }
@@ -323,11 +339,95 @@ function initTransferConsumer(){
   });
 }
 
+function initGetTotalSaldoPublisher(routingKey, userID, senderID){
+  amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
+    conn.createChannel(function(err, ch) {
+      var message = {};
+      message.action = "get_total_saldo";
+      message.user_id = userID;
+      message.sender_id = senderID;
+      message.type = "request";
+      var currTime = new Date(Date.now());
+      currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+      message.ts = currTime;
+      message = JSON.stringify(message);
+      var ex = 'EX_GET_TOTAL_SALDO';
+      ch.assertExchange(ex, 'direct', {durable: true});
+      ch.publish(ex, routingKey, new Buffer(message));
+      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+    });
+  })
+}
 
-initTransferConsumer()
+function initGetTotalSaldoRespPublisher(routingKey,senderID, nilai_saldo, ts){
+  amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
+    conn.createChannel(function(err, ch) {
+      var message = {};
+      message.action = "get_total_saldo";
+      message.nilai_saldo = nilai_saldo;
+      message.sender_id = senderID;
+      message.type = "response";
+      message = JSON.stringify(message);
+      var ex = 'EX_GET_TOTAL_SALDO';
+      ch.assertExchange(ex, 'direct', {durable: true});
+      ch.publish(ex, routingKey, new Buffer(message));
+      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+    });
+  })
+}
+
+function initGetTotalSaldoConsumer(){
+  amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
+    conn.createChannel(function(err, ch) {
+      var ex = 'EX_GET_TOTAL_SALDO';
+      var routingKey = 'REQ_1406623064'
+      ch.assertExchange(ex, 'direct', {durable: true});
+      ch.assertQueue('', {exclusive: true}, function(err, q) {
+        console.log(' [*] Waiting for logs. To exit press CTRL+C');
+        ch.bindQueue(q.queue, ex, routingKey);
+        routingKey = 'RESP_1406623064'
+        ch.bindQueue(q.queue, ex, routingKey);
+        ch.consume(q.queue, function(msg) {
+          console.log("Reading message data");
+          console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
+          var strMessage = msg.content.toString();
+          try{
+            var message = JSON.parse(strMessage)
+            if(message.type == 'response'){
+              console.log("Total Saldo adalah "+ message.nilai_saldo)
+            } else if(message.type == 'request')  {
+              getTotalSaldoCounter = getTotalSaldoCounter + quourumNpm.length;
+              for (var npm in quourumNpm) {
+                initGetSaldoPublisher("REQ_"+npm, "140623064", "1406623064")
+              }
+            }
+          } catch(e) {
+            console.log("error parsing JSON, logging message")
+            console.log("=========")
+            console.log(strMessage);
+            console.log("*********")
+          }
+
+        }, {noAck: true});
+      });
+    });
+  });
+}
+
+var flagTotal = 1;
+initGetTotalSaldoConsumer()
 setInterval(function(){
-    initTransferPublisher("REQ_1406623064", "1406623064", "1406623064", "10000")
-}, 5000);
+    if(flagTotal == 1) {
+        initGetTotalSaldoPublisher("REQ_1406623064", "1406623064", "1406623064", "10000")
+        flagTotal = 0
+    }
+
+}, 9000);
+
+// initTransferConsumer()
+// setInterval(function(){
+//     initTransferPublisher("REQ_1406623064", "1406623064", "1406623064", "10000")
+// }, 5000);
 
 
 // initGetSaldoConsumer()
