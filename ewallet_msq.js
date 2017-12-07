@@ -98,7 +98,6 @@ function initRegisterConsumer(){
       ch.assertQueue('', {exclusive: true}, function(err, q) {
         console.log(' [*] Waiting for logs. To exit press CTRL+C');
         ch.bindQueue(q.queue, ex, routingKey);
-
         ch.consume(q.queue, function(msg) {
           console.log("BERHASIL MASUK KE CONSUMER REGISTER");
           console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
@@ -113,6 +112,6 @@ setInterval(function(){
 }, 5000);
 
 
-// initPingPublisher();
-// console.log("init consumer");
-// initPingConsumer();
+initPingPublisher();
+console.log("init consumer");
+initPingConsumer();
