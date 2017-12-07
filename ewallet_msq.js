@@ -289,8 +289,9 @@ function initTransferConsumer(){
             if(message.type == 'response'){
               console.log("Status Transfer adalah "+ message.status_transfer)
               if(message.status_transfer == 1){
-                ewallet.decreaseSaldo("1406623064", transferQueue.shift()).then(function(res){
-                  console.log("Saldo pada user "+ "1406623064" +" telah berhasil dikurangi sebanyak "+transferQueue.shift())
+                var nilaiTransfer = transferQueue.shift();
+                ewallet.decreaseSaldo("1406623064", nilaiTransfer).then(function(res){
+                  console.log("Saldo pada user "+ "1406623064" +" telah berhasil dikurangi sebanyak "+nilaiTransfer)
                 }).catch(function(err){
                   console.log("*************")
                   console.log("Pengurangan saldo gagal, dengan user "+message.user_id+" dan saldo "+ message.nilai)
@@ -325,7 +326,6 @@ function initTransferConsumer(){
 
 initTransferConsumer()
 setInterval(function(){
-    console.log("WKWKWKW")
     initTransferPublisher("REQ_1406623064", "1406623064", "1406623064", "10000")
 }, 5000);
 
