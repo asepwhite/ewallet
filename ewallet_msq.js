@@ -227,11 +227,101 @@ function initGetSaldoConsumer(){
   });
 }
 
+function initTransferPublisher(routingKey, userID, senderID, nilai){
+  amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
+    conn.createChannel(function(err, ch) {
+      var message = {};
+      message.action = "transfer";
+      message.user_id = userID;
+      message.sender_id = senderID;
+      message.nilai = nilai;
+      message.type = "request";
+      var currTime = new Date(Date.now());
+      currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+      message.ts = currTime;
+      message = JSON.stringify(message);
+      var ex = 'EX_TRANSFER';
+      ch.assertExchange(ex, 'direct', {durable: true});
+      ch.publish(ex, routingKey, new Buffer(message));
+      // console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+    });
+  })
+}
 
-initGetSaldoConsumer()
-setInterval(function(){
-    initGetSaldoPublisher("REQ_1406623064", "1406623064", "1406623064")
-}, 5000);
+function initTransferRespPublisher(routingKey, status_transfer, ts){
+  amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
+    conn.createChannel(function(err, ch) {
+      var message = {};
+      message.action = "transfer";
+      message.type = "response";
+      message.status_transfer = status_register;
+      message.ts = ts;
+      message = JSON.stringify(message);
+      var ex = 'EX_TRANSFER';
+      ch.assertExchange(ex, 'direct', {durable: true});
+      ch.publish(ex, routingKey, new Buffer(message));
+      // console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+    });
+  })
+}
+
+function initTransferConsumer(){
+  amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
+    conn.createChannel(function(err, ch) {
+      var ex = 'EX_TRANSFER';
+      var routingKey = 'REQ_1406623064'
+      ch.assertExchange(ex, 'direct', {durable: true});
+      ch.assertQueue('', {exclusive: true}, function(err, q) {
+        console.log(' [*] Waiting for logs. To exit press CTRL+C');
+        ch.bindQueue(q.queue, ex, routingKey);
+        routingKey = 'RESP_1406623064'
+        ch.bindQueue(q.queue, ex, routingKey);
+        ch.consume(q.queue, function(msg) {
+          console.log("Reading message data");
+          console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
+          var strMessage = msg.content.toString();
+          try{
+            var message = JSON.parse(strMessage)
+            if(message.type == 'response'){
+              console.log("Status Transfer adalah "+ message.status_transfer)
+              ewallet.decreaseSaldo(message.user_id, message.nilai).then(function(res){
+                console.log("Saldo pada user "+ message.user_id+" telah berhasil dikurangi sebanyak "+message.nilai)
+              }).catch(function(err){
+                console.log("*************")
+                console.log("Pengurangan saldo gagal, dengan user "+message.user_id+" dan saldo "+ message.nilai)
+                console.log("*************")
+              });
+            } else if(message.type == 'request')  {
+              ewallet.transfer(message.user_id, message.nilai).then(function(res){
+                  var currTime = new Date(Date.now());
+                  currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+                  initTransferRespPublisher("RESP_"+message.sender_id, res, currTime);
+              }).catch(function(err){
+                  console.log("ini log error dengan message error ", err)
+                  var currTime = new Date(Date.now());
+                  currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+                  initTransferRespPublisher("RESP_"+message.sender_id, res, currTime);
+              })
+            }
+          } catch(e) {
+            console.log("error parsing JSON, logging message")
+            console.log("=========")
+            console.log(strMessage);
+            console.log("*********")
+          }
+
+        }, {noAck: true});
+      });
+    });
+  });
+}
+
+
+
+// initGetSaldoConsumer()
+// setInterval(function(){
+//     initGetSaldoPublisher("REQ_1406623064", "1406623064", "1406623064")
+// }, 5000);
 
 // initRegisterConsumer()
 // setInterval(function(){
