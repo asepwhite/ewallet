@@ -62,6 +62,12 @@ function initPingConsumer(){
 }
 
 function initRegisterPublisher(routingKey, userID, name, senderID){
+  console.log("--------------------")
+  console.log(routingKey)
+  console.log(userID)
+  console.log(name)
+  console.log(senderID)
+  console.log("--------------------")
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
   conn.createChannel(function(err, ch) {
     var message = {};
@@ -75,7 +81,6 @@ function initRegisterPublisher(routingKey, userID, name, senderID){
     message.ts = currTime;
     message = JSON.stringify(message);
     var ex = 'EX_REGISTER';
-    var routingKey = routingKey;
     ch.assertExchange(ex, 'direct', {durable: true});
     ch.publish(ex, routingKey, new Buffer(message));
     console.log(" [x] Sent a message with register key %s: and message'%s'", routingKey, message);
