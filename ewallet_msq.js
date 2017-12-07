@@ -99,9 +99,11 @@ function initRegisterConsumer(){
           try{
             var message = JSON.parse(strMessage)
             console.log(message.user_id);
-            // ewallet.registerUser(message.user_id, message.nama).then(function(result){
-            //   console.log("INI ADALAH HASIL "+ result);
-            // })
+            ewallet.registerUser(message.user_id, message.nama).then(function(result){
+              console.log("INI ADALAH HASIL "+ result);
+            }).catch(function(err){
+              console.log(err)
+            })
           } catch(e) {
             console.log("error parsing JSON, logging message")
             console.log("=========")
