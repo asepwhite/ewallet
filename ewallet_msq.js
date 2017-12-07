@@ -209,7 +209,11 @@ function initGetSaldoConsumer(){
             var message = JSON.parse(strMessage)
             if(message.type == 'response'){
               if(getTotalSaldoCounter > 0){
-                getTotalSaldoQueue[parseInt(getTotalSaldoCounter/5) - 1] = getTotalSaldoQueue[parseInt(getTotalSaldoCounter/5)] + message.nilai_saldo
+                if(getTotalSaldoCounter % 5 == 0){
+                  getTotalSaldoQueue[parseInt(getTotalSaldoCounter/5) - 1] = getTotalSaldoQueue[parseInt(getTotalSaldoCounter/5)] + message.nilai_saldo
+                } else {
+                    getTotalSaldoQueue[parseInt(getTotalSaldoCounter/5)] = getTotalSaldoQueue[parseInt(getTotalSaldoCounter/5)] + message.nilai_saldo
+                }
                 getTotalSaldoCounter = getTotalSaldoCounter - 1
                 if(getTotalSaldoCounter % 5 == 0){
                   console.log("TOTAL SALDO ADALAH "+getTotalSaldoQueue[parseInt(getTotalSaldoCounter/5)])
