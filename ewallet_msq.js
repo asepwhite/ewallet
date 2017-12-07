@@ -325,6 +325,7 @@ function initTransferConsumer(){
 
 initTransferConsumer()
 setInterval(function(){
+    console.log("WKWKWKW")
     initTransferPublisher("REQ_1406623064", "1406623064", "1406623064", "10000")
 }, 5000);
 
