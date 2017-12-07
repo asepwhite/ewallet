@@ -4,7 +4,7 @@ const Sequelize = require('sequelize');
 const sequelize = new Sequelize('sisdis', 'root', 'rootroot', {
   host: 'localhost',
   dialect: 'mysql',
-  loggin : false
+  logging : false
 });
 const User = sequelize.define('users', {
   npm: { type: Sequelize.INTEGER,  unique: true },
