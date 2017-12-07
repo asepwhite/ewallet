@@ -102,8 +102,8 @@ function initRegisterConsumer(){
     });
   });
 }
-initRegisterConsumer('REQ_1406623064', '1406623064', 'Akbar Septriyan', '1406623064')
-initRegisterPublisher()
+initRegisterConsumer()
+initRegisterPublisher('REQ_1406623064', '1406623064', 'Akbar Septriyan', '1406623064')
 
 // initPingPublisher();
 // console.log("init consumer");
