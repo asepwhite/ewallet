@@ -76,7 +76,7 @@ function initRegisterPublisher(routingKey, userID, name, senderID){
     message = JSON.stringify(message);
     var ex = 'EX_REGISTER';
     var routingKey = routingKey;
-    ch.assertExchange(ex, 'direct', {durable: false});
+    ch.assertExchange(ex, 'direct', {durable: true});
     ch.publish(ex, routingKey, new Buffer(message));
     console.log(" [x] Sent a message with register key %s: and message'%s'", routingKey, message);
   });
@@ -89,7 +89,7 @@ function initRegisterConsumer(){
     conn.createChannel(function(err, ch) {
       var ex = 'EX_REGISTER';
       var routingKey = 'REQ_1406623064'
-      ch.assertExchange(ex, 'direct', {durable: false});
+      ch.assertExchange(ex, 'direct', {durable: true});
       ch.assertQueue('', {exclusive: true}, function(err, q) {
         console.log(' [*] Waiting for logs. To exit press CTRL+C');
         ch.bindQueue(q.queue, ex, routingKey);
