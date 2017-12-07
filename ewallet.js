@@ -3,7 +3,8 @@ var axios = require("axios")
 const Sequelize = require('sequelize');
 const sequelize = new Sequelize('sisdis', 'root', 'rootroot', {
   host: 'localhost',
-  dialect: 'mysql'
+  dialect: 'mysql',
+  loggin : false
 });
 const User = sequelize.define('users', {
   npm: { type: Sequelize.INTEGER,  unique: true },
@@ -56,15 +57,15 @@ var transferSaldo = function(userId, totalTransfer){
         updatedSaldo = userData.saldo+totalTransfer
         user.set('saldo', updatedSaldo)
         user.save()
-        return 1;
+        return Promise.resolve(1);
       } else {
-        return -1
+        return Promise.resolve(-1);
       }
     }).catch(function(err){
-      return -4
+      return Promise.resolve(-4)
     });
   }).catch(function(){
-    return -4
+    return Promise.resolve(-4)
   })
 }
 
@@ -80,15 +81,15 @@ var decreaseSaldo = function(userId, totalTransfer){
         updatedSaldo = userData.saldo-totalTransfer
         user.set('saldo', updatedSaldo)
         user.save()
-        return 1;
+        return Promise.resolve(1)
       } else {
-        return -1
+        return Promise.resolve(-1)
       }
     }).catch(function(err){
-      return -4
+      return Promise.resolve(-4)
     });
   }).catch(function(){
-    return -4
+    return Promise.resolve(-4)
   })
 }
 
