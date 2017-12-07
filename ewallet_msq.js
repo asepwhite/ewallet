@@ -99,11 +99,7 @@ function initRegisterConsumer(){
           try{
             var message = JSON.parse(strMessage)
             console.log(message.user_id);
-            ewallet.registerUser(message.user_id, message.nama).then(function(result){
-              console.log("INI ADALAH HASIL "+ result);
-            }).catch(function(err){
-              console.log(err)
-            })
+            registerUser(message.user_id, message.nama)
           } catch(e) {
             console.log("error parsing JSON, logging message")
             console.log("=========")
@@ -116,6 +112,27 @@ function initRegisterConsumer(){
     });
   });
 }
+
+function registerUser(userId, name){
+  return sequelize.sync().then(function(){
+    console.log("MASUK SINI WEY")
+    return User.create({
+      npm: userId,
+      nama: name,
+      saldo: 0
+    }).then(function(){
+      console.log("MASUK SINI WEY 2")
+      return 1
+    }).catch(function(err){
+      console.log("MASUK SINI WEY 3")
+      return -4
+    });
+  }).catch(function(err){
+    console.log("MASUK SINI WEY 4")
+    return -4;
+  });
+}
+
 initRegisterConsumer()
 setInterval(function(){
     initRegisterPublisher('REQ_1406623064', '1406623064', 'Akbar Septriyan', '1406623064')
