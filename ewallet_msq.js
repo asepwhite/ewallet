@@ -78,7 +78,7 @@ function initRegisterPublisher(routingKey, userID, name, senderID){
       var ex = 'EX_REGISTER';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
-      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
+      // console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
