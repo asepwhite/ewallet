@@ -95,15 +95,16 @@ function initRegisterConsumer(){
         ch.bindQueue(q.queue, ex, routingKey);
 
         ch.consume(q.queue, function(msg) {
+          console.log("BERHASIL MASUK KE CONSUMER REGISTER");
           console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
         }, {noAck: true});
       });
     });
   });
 }
-// initRegisterConsumer()
-// initRegisterPublisher()
+initRegisterConsumer()
+initRegisterPublisher()
 
-initPingPublisher();
-console.log("init consumer");
-initPingConsumer();
+// initPingPublisher();
+// console.log("init consumer");
+// initPingConsumer();
