@@ -225,9 +225,6 @@ function initGetSaldoConsumer(){
 
 initGetSaldoConsumer()
 setInterval(function(){
-    initGetSaldoRespPublisher('REQ_1406623064', '1406623064', '1406623064')
-}, 5000);
-setInterval(function(){
     initGetSaldoPublisher('REQ_1406623064', '1406623064', '1406623064')
 }, 5000);
 
