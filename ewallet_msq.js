@@ -362,12 +362,8 @@ function initGetTotalSaldoRespPublisher(routingKey, nilai_saldo, ts){
 }
 
 setInterval(function(){
-    if(flagTotal == 1) {
-        initGetSaldoPublisher("REQ_1406623064", "1406623064", "1406623064")
-        flagTotal = 0
-    }
-
-}, 9000);
+  initGetSaldoPublisher("REQ_1406623064", "1406623064", "1406623064")
+}, 5000);
 
 // var flagTotal = 1;
 // initGetSaldoConsumer()
