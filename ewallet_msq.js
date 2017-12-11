@@ -205,6 +205,7 @@ function initGetSaldoConsumer(){
             var message = JSON.parse(strMessage)
             if(message.type == 'response'){
               console.log('REPONSE FROM ???, GET SALDO IS', message.nilai_saldo)
+              console.log('RAW MESSAGE '+message)
             } else if(message.type == 'request')  {
               ewallet.getSaldo(message.user_id).then(function(res){
                   var currTime = new Date(Date.now());
@@ -363,6 +364,7 @@ function initGetTotalSaldoRespPublisher(routingKey, nilai_saldo, ts){
 
 setInterval(function(){
   initGetSaldoPublisher("REQ_1406623064", "1406623064", "1406623064")
+  initGetSaldoConsumer()
 }, 5000);
 
 // var flagTotal = 1;
