@@ -205,7 +205,7 @@ function initGetSaldoConsumer(){
             var message = JSON.parse(strMessage)
             if(message.type == 'response'){
               console.log('REPONSE FROM ???, GET SALDO IS', message.nilai_saldo)
-              console.log('RAW MESSAGE '+message)
+              console.log('RAW MESSAGE '+JSON.stringify(message))
             } else if(message.type == 'request')  {
               ewallet.getSaldo(message.user_id).then(function(res){
                   var currTime = new Date(Date.now());
