@@ -219,6 +219,7 @@ function initGetSaldoConsumer(){
                   getTotalSaldoValue += message.nilai_saldo
                   initGetTotalSaldoRespPublisher("RESP_1406623064", getTotalSaldoValue);
                 }
+                getTotalSaldoValue += message.nilai_saldo
                 getTotalCounter -= 1
               }
             } else if(message.type == 'request')  {
