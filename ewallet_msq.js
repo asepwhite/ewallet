@@ -207,6 +207,7 @@ function initGetSaldoConsumer(){
           console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
           var strMessage = msg.content.toString();
           try{
+            console.log("blalalala")
             var message = JSON.parse(strMessage)
             if(message.type == 'response'){
               console.log("NEET")
@@ -400,6 +401,7 @@ function initGetTotalSaldoConsumer(){
             if(message.type == 'response'){
               console.log("Total Saldo adalah "+ message.nilai_saldo)
             } else if(message.type == 'request')  {
+              console.log("blelelel")
               for (var index in quorum) {
                 getTotalCounter += 1;
                 initGetSaldoPublisher("REQ_1406623064", "1406623064", "1406623064")
