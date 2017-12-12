@@ -20,6 +20,7 @@ var transferQueue = []
 var getTotalSaldoCounter = -1
 var getTotalSaldoValue = 0
 var quorum = ['1406623064', '1406623064', '1406623064', '1406623064', '1406623064']
+var testCounter = 0;
 
 function initPingPublisher() {
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
@@ -212,12 +213,13 @@ function initGetSaldoConsumer(){
               console.log('RAW MESSAGE '+JSON.stringify(message))
             } else if(message.type == 'request')  {
               console.log("ini counter get total saldo  "+getTotalSaldoCounter)
+              testCounter += 1
+              console.log(testCounter)
               ewallet.getSaldo(message.user_id).then(function(res){
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
                   if(getTotalSaldoCounter > 0) {
                     getTotalSaldoValue  = getTotalSaldoValue + res
-                    getTotalSaldoCounter = getTotalSaldoCounter - 1
                   } else if (getTotalSaldoCounter == 0) {
                     initGetTotalSaldoRespPublisher("RESP_"+message.sender_id, getTotalSaldoValue, currTime)
                     getTotalSaldoCounter = -1
