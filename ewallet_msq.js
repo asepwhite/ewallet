@@ -24,6 +24,28 @@ var getTotalCounter = 0
 var quorum = ['1406623064', '1406623064', '1406623064', '1406623064', '1406623064']
 
 
+var checkQuorum = function checkQuorum() {
+  var successPing = 0;
+  var failedPing = 0;
+  var currTime = new Date(Date.now());
+  currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+  var diffJobs = [];
+  for (var index in quorum) {
+    diffJobs.push(Pings.findOne({ where: {npm : quorum[index]}}).then(function(pingsResult){
+      userTime = moment(pingsResult.time).format("YYYY-MM-DD HH:mm:ss")
+      timeDifference = currTime.diff(userTime, 'seconds')
+      if(timeDifference > 5){
+        failedPing++;
+      } else {
+        successPing++;
+      }
+    }));
+  }
+  Promise.all(diffJobs).then(function(res){
+    return successPing / (successPing + failedPing)
+  })
+}
+
 var publishPing = function publishPing() {
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
@@ -55,6 +77,7 @@ var consumePing = function consumePing(){
           var strMessage = msg.content.toString();
           try{
             var message = JSON.parse(strMessage)
+            console.log("berhasil")
             Pings.findOrCreate({where: {npm: message.npm}, defaults: {time: message.ts}})
           } catch(e) {
             console.log("error parsing JSON, logging message")
@@ -375,14 +398,11 @@ var consumeGetTotalSaldo = function consumeGetTotalSaldo(){
             if(message.type == 'response'){
               console.log("Total Saldo : "+ message.nilai_saldo)
             } else if(message.type == 'request')  {
-              // getSaldoQueue.push(message.sender_id)
-              // for (var index in quorum) {
-              //   getTotalCounter += 1;
-              //   publishGetSaldo("REQ_"+quorum[index], message.user_id)
-              // }
-              var currTime = new Date(Date.now());
-              currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-              publishGetTotalSaldoResponse("RESP_1406623064", "1000",currTime)
+              getSaldoQueue.push(message.sender_id)
+              for (var index in quorum) {
+                getTotalCounter += 1;
+                publishGetSaldo("REQ_"+quorum[index], message.user_id)
+              }
             }
           } catch(e) {
             console.log("error parsing JSON, logging message")
@@ -422,5 +442,6 @@ module.exports = {
   publishGetTotalSaldo : publishGetTotalSaldo,
   publishGetTotalSaldoResponse : publishGetTotalSaldoResponse,
   consumeGetTotalSaldo : consumeGetTotalSaldo,
-  initAllConsumer : initAllConsumer
+  initAllConsumer : initAllConsumer,
+  checkQuorum : checkQuorum
 }
