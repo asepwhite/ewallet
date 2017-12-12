@@ -216,8 +216,8 @@ function initGetSaldoConsumer(){
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
                   if(getTotalSaldoCounter > 0) {
-                    getTotalSaldoValue += res;
-                    getTotalSaldoCounter -= 1
+                    getTotalSaldoValue  = getTotalSaldoValue + res
+                    getTotalSaldoCounter = getTotalSaldoCounter - 1
                   } else if (getTotalSaldoCounter == 0) {
                     initGetTotalSaldoRespPublisher("RESP_"+message.sender_id, getTotalSaldoValue, currTime)
                     getTotalSaldoCounter = -1
@@ -420,6 +420,12 @@ initGetSaldoConsumer()
 setTimeout(function(){
   initGetTotalSaldoPublisher("REQ_1406623064", '1406623064', "1406623064")
 }, 5000);
+
+setTimeout(function(){
+console.log("ini counter get total saldo  "+getTotalSaldoCounter)
+}, 10000);
+
+
 
 // var flagTotal = 1;
 // initGetSaldoConsumer()
