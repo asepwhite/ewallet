@@ -17,6 +17,9 @@ const User = sequelize.define('users', {
 var amqp = require('amqplib/callback_api');
 var moment = require('moment')
 var transferQueue = []
+var getTotalSaldoCounter = -1
+var getTotalSaldoValue = 0
+var quorum = ['1406623064', '1406623064', '1406623064', '1406623064', '1406623064']
 
 function initPingPublisher() {
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
@@ -210,7 +213,16 @@ function initGetSaldoConsumer(){
               ewallet.getSaldo(message.user_id).then(function(res){
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-                  initGetSaldoRespPublisher("RESP_"+message.sender_id, res, currTime);
+                  if(getTotalSaldoCounter > 0) {
+                    getTotalSaldoValue += res;
+                    getTotalSaldoCounter -= 1
+                  } else if (getTotalSaldoCounter == 0) {
+                    initGetTotalSaldoRespPublisher("RESP_"+message.sender_id, getTotalSaldoValue, currTime)
+                    getTotalSaldoCounter = -1
+                    getTotalSaldoValue = 0
+                  } else {
+                    initGetSaldoRespPublisher("RESP_"+message.sender_id, res, currTime);
+                  }
               }).catch(function(err){
                   console.log("ini log error dengan message error ", err)
                   var currTime = new Date(Date.now());
@@ -360,6 +372,44 @@ function initGetTotalSaldoRespPublisher(routingKey, nilai_saldo, ts){
       console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
+}
+
+function initGetTotalSaldoConsumer(){
+  amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
+    conn.createChannel(function(err, ch) {
+      var ex = 'EX_GET_TOTAL_SALDO';
+      var routingKey = 'REQ_1406623064'
+      ch.assertExchange(ex, 'direct', {durable: true});
+      ch.assertQueue('', {exclusive: true}, function(err, q) {
+        console.log(' [*] Waiting for logs. To exit press CTRL+C');
+        ch.bindQueue(q.queue, ex, routingKey);
+        routingKey = 'RESP_1406623064'
+        ch.bindQueue(q.queue, ex, routingKey);
+        ch.consume(q.queue, function(msg) {
+          console.log("Reading message data");
+          console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
+          var strMessage = msg.content.toString();
+          try{
+            var message = JSON.parse(strMessage)
+            if(message.type == 'response'){
+              console.log("Total Saldo adalah "+ message.nilai_saldo)
+            } else if(message.type == 'request')  {
+              getTotalSaldoCounter = 5;
+              for (var index in quorum) {
+                initGetSaldoPublisher("REQ_146623064", "1406623064", "1406623064")
+              }
+            }
+          } catch(e) {
+            console.log("error parsing JSON, logging message")
+            console.log("=========")
+            console.log(strMessage);
+            console.log("*********")
+          }
+
+        }, {noAck: true});
+      });
+    });
+  });
 }
 
 setInterval(function(){
