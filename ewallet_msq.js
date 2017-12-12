@@ -193,7 +193,6 @@ var consumeGetSaldo = function consumeGetSaldo(){
         ch.consume(q.queue, function(msg) {
           var strMessage = msg.content.toString();
           try{
-            strMessage = JSON.stringify(strMessage)
             var message = JSON.parse(strMessage)
             if(message.type == 'response'){
               if(getTotalCounter > 0){
@@ -376,11 +375,14 @@ var consumeGetTotalSaldo = function consumeGetTotalSaldo(){
             if(message.type == 'response'){
               console.log("Total Saldo : "+ message.nilai_saldo)
             } else if(message.type == 'request')  {
-              getSaldoQueue.push(message.sender_id)
-              for (var index in quorum) {
-                getTotalCounter += 1;
-                publishGetSaldo("REQ_"+quorum[index], message.user_id)
-              }
+              // getSaldoQueue.push(message.sender_id)
+              // for (var index in quorum) {
+              //   getTotalCounter += 1;
+              //   publishGetSaldo("REQ_"+quorum[index], message.user_id)
+              // }
+              var currTime = new Date(Date.now());
+              currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+              publishGetTotalSaldoResponse("RESP_1406623064", "1000",currTime)
             }
           } catch(e) {
             console.log("error parsing JSON, logging message")
