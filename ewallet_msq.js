@@ -336,7 +336,7 @@ function initTransferConsumer(){
   });
 }
 
-function initGetTotalSaldo(routingKey, userID, senderID){
+function initGetTotalSaldoPublisher(routingKey, userID, senderID){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var message = {};
@@ -412,9 +412,10 @@ function initGetTotalSaldoConsumer(){
   });
 }
 
+initGetTotalSaldoConsumer()
+initGetSaldoConsumer()
 setInterval(function(){
-  initGetSaldoPublisher("REQ_1406623064", "1406623064", "1406623064")
-  initGetSaldoConsumer()
+  initGetTotalSaldoPublisher("REQ_1406623064", '1406623064', "1406623064")
 }, 5000);
 
 // var flagTotal = 1;
