@@ -395,6 +395,8 @@ function initGetTotalSaldoConsumer(){
             if(message.type == 'response'){
               console.log("Total Saldo adalah "+ message.nilai_saldo)
             } else if(message.type == 'request')  {
+              console.log("MASUK KE SINI")
+              process.exit(0)
               getTotalSaldoCounter = 5;
               for (var index in quorum) {
                 initGetSaldoPublisher("REQ_146623064", "1406623064", "1406623064")
@@ -417,7 +419,7 @@ initGetTotalSaldoConsumer()
 initGetSaldoConsumer()
 setInterval(function(){
   initGetTotalSaldoPublisher("REQ_1406623064", '1406623064', "1406623064")
-}, 9000);
+}, 5000);
 
 // var flagTotal = 1;
 // initGetSaldoConsumer()
