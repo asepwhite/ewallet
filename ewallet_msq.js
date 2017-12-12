@@ -426,6 +426,7 @@ function getTotalSaldoAdder(message){
       currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
       console.log("nilai saldo "+res);
       getTotalSaldoValue += res
+      console.log("ini adallah total saldo "+getTotalSaldoValue)
       return Promise.resolve(1)
   }).catch(function(err){
       console.log("ini log error dengan message error ", err)
