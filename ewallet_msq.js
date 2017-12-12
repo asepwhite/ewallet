@@ -193,6 +193,7 @@ var consumeGetSaldo = function consumeGetSaldo(){
         ch.consume(q.queue, function(msg) {
           var strMessage = msg.content.toString();
           try{
+            strMessage = JSON.stringify(strMessage)
             var message = JSON.parse(strMessage)
             if(message.type == 'response'){
               if(getTotalCounter > 0){
