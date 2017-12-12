@@ -7,6 +7,7 @@ const jsonParser = bodyParser.json();
 const ewallet = require('./ewallet')
 const rabbitMQ = require('./ewallet_msq')
 var stdin = process.openStdin()
+rabbitMQ.initAllConsumer()
 //CLi
 function callOpeningSentences(){
   console.log("=====Selamat datang di ewallet cabang bank Akbar=====")
