@@ -77,7 +77,6 @@ var consumePing = function consumePing(){
           var strMessage = msg.content.toString();
           try{
             var message = JSON.parse(strMessage)
-            console.log("berhasil")
             Pings.findOrCreate({where: {npm: message.npm}, defaults: {time: message.ts}})
           } catch(e) {
             console.log("error parsing JSON, logging message")
