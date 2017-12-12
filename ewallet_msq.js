@@ -18,39 +18,38 @@ const User = sequelize.define('users', {
 var amqp = require('amqplib/callback_api');
 var moment = require('moment')
 var transferQueue = []
+var getSaldoQueue = []
 var getTotalSaldoValue = 0
 var getTotalCounter = 0
 var quorum = ['1406623064', '1406623064', '1406623064', '1406623064', '1406623064']
 
 
-function initPingPublisher() {
+var publishPing = function publishPing() {
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var ex = 'EX_PING';
       ch.assertExchange(ex, 'fanout', {durable: false});
-      sendPingMessage(ch, ex);
+      sendRepeatedPing(ch, ex);
     });
   });
 }
 
-function sendPingMessage(ch, ex)
+var sendRepeatedPing =  function sendRepeatedPing(ch, ex)
 {
   setInterval(function(){
     var currTime = new Date(Date.now());
     currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
     var message = '{"action":"ping","npm":"1406623064","ts":"'+currTime+'"}'
     ch.publish(ex, '', new Buffer(message));
-    console.log("SUCCESS SENDING PING");
   }, 5000);
 }
 
-function initPingConsumer(){
+var consumePing = function consumePing(){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var ex = 'EX_PING';
       ch.assertExchange(ex, 'fanout', {durable: false});
       ch.assertQueue('', {exclusive: true}, function(err, q) {
-        console.log(" STARTING PING CONSUMER", q.queue);
         ch.bindQueue(q.queue, ex, '');
         ch.consume(q.queue, function(msg) {
           var strMessage = msg.content.toString();
@@ -69,14 +68,14 @@ function initPingConsumer(){
   });
 }
 
-function initRegisterPublisher(routingKey, userID, name, senderID){
+var publishRegister = function publishRegister(routingKey, userID, name){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var message = {};
       message.action = "register";
       message.user_id = userID;
       message.nama = name;
-      message.sender_id = senderID;
+      message.sender_id = "1406623064";
       message.type = "request";
       var currTime = new Date(Date.now());
       currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
@@ -85,58 +84,52 @@ function initRegisterPublisher(routingKey, userID, name, senderID){
       var ex = 'EX_REGISTER';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
-      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
 
-function initRegisterRespPublisher(routingKey, status_register, ts){
+var publishRegisterResponse =  function publishRegisterResponse(routingKey, status_register, ts){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var message = {};
       message.action = "register";
       message.type = "response";
       message.status_register = status_register;
-      message.sender_id = "1406623064";
       message.ts = ts;
       message = JSON.stringify(message);
       var ex = 'EX_REGISTER';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
-      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
 
-function initRegisterConsumer(){
+var consumeRegister =  function consumeRegister(){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var ex = 'EX_REGISTER';
       var routingKey = 'REQ_1406623064'
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.assertQueue('', {exclusive: true}, function(err, q) {
-        console.log(' [*] Waiting for logs. To exit press CTRL+C');
         ch.bindQueue(q.queue, ex, routingKey);
         routingKey = 'RESP_1406623064'
         ch.bindQueue(q.queue, ex, routingKey);
         ch.consume(q.queue, function(msg) {
-          console.log("Reading message data");
-          console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
           var strMessage = msg.content.toString();
           try{
             var message = JSON.parse(strMessage)
             if(message.type == 'response'){
-              console.log('REPONSE FROM ???, STATUS REGISTER IS', message.status_register)
+              console.log('STATUS REGISTER : ', message.status_register)
             } else if(message.type == 'request')  {
               ewallet.register(message.user_id, message.nama).then(function(res){
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-                  initRegisterRespPublisher("RESP_"+message.sender_id, res, currTime);
+                  publishRegisterResponse("RESP_"+message.sender_id, res, currTime);
               }).catch(function(err){
-                  console.log("ini log error dengan message error ", err)
+                  console.log("Error ketika registrasi, status registrasi : ", err)
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-                  initRegisterRespPublisher("RESP_"+message.sender_id, res, currTime);
+                  publishRegisterResponse("RESP_"+message.sender_id, res, currTime);
               })
             }
           } catch(e) {
@@ -145,20 +138,19 @@ function initRegisterConsumer(){
             console.log(strMessage);
             console.log("*********")
           }
-
         }, {noAck: true});
       });
     });
   });
 }
 
-function initGetSaldoPublisher(routingKey, userID, senderID){
+var publishGetSaldo =  function publishGetSaldo(routingKey, userID){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var message = {};
       message.action = "get_saldo";
       message.user_id = userID;
-      message.sender_id = senderID;
+      message.sender_id = "1406623064";
       message.type = "request";
       var currTime = new Date(Date.now());
       currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
@@ -167,74 +159,67 @@ function initGetSaldoPublisher(routingKey, userID, senderID){
       var ex = 'EX_GET_SALDO';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
-      // console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
 
-function initGetSaldoRespPublisher(routingKey, nilai_saldo, ts){
+var publishGetSaldoResponse = function publishGetSaldoResponse(routingKey, nilai_saldo, ts){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var message = {};
       message.action = "get_saldo";
       message.type = "response";
       message.nilai_saldo = nilai_saldo;
-      message.sender_id = "1406623064";
       message.ts = ts;
       message = JSON.stringify(message);
       var ex = 'EX_GET_SALDO';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
-      // console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
 
 
-function initGetSaldoConsumer(){
+var consumeGetSaldo = function consumeGetSaldo(){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var ex = 'EX_GET_SALDO';
       var routingKey = 'REQ_1406623064'
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.assertQueue('', {exclusive: true}, function(err, q) {
-        console.log(' [*] Waiting for logs. To exit press CTRL+C');
         ch.bindQueue(q.queue, ex, routingKey);
         routingKey = 'RESP_1406623064'
         ch.bindQueue(q.queue, ex, routingKey);
         ch.consume(q.queue, function(msg) {
-          console.log("Reading message data");
-          console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
           var strMessage = msg.content.toString();
           try{
-            console.log("blalalala")
             var message = JSON.parse(strMessage)
             if(message.type == 'response'){
-              console.log("NEET")
-              console.log('REPONSE FROM ???, GET SALDO IS', message.nilai_saldo)
-              console.log('RAW MESSAGE '+JSON.stringify(message))
               if(getTotalCounter > 0){
                 if(getTotalCounter == 1){
                   getTotalSaldoValue += message.nilai_saldo
-                  initGetTotalSaldoRespPublisher("RESP_1406623064", getTotalSaldoValue);
+                  consumeGetTotalSaldosaldoSaldoResponse("RESP_"+getSaldoQueue[0], getTotalSaldoValue);
+                  getSaldoQueue.shift()
                 } else if (getTotalCounter % 5 == 1) {
                   getTotalSaldoValue += message.nilai_saldo
-                  initGetTotalSaldoRespPublisher("RESP_1406623064", getTotalSaldoValue);
+                  consumeGetTotalSaldosaldoSaldoResponse("RESP_"+getSaldoQueue[0], getTotalSaldoValue);
+                  getSaldoQueue.shift()
                 }
                 getTotalSaldoValue += message.nilai_saldo
                 getTotalCounter -= 1
+              } else {
+                console.log("Saldo anda : "+message.nilai_saldo)
               }
-            } else if(message.type == 'request')  {
-              console.log("NOOT")
+            } else if(message.type == 'request'){
               ewallet.getSaldo(message.user_id).then(function(res){
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-                  initGetSaldoRespPublisher("RESP_"+message.sender_id, res, currTime);
+                  publishGetSaldoResponse("RESP_"+message.sender_id, res, currTime);
               }).catch(function(err){
-                  console.log("ini log error dengan message error ", err)
+                  console.log("Error ketika get saldo, status : ", err)
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-                  initGetSaldoRespPublisher("RESP_"+message.sender_id, res, currTime);
+                  publishGetSaldoResponse("RESP_"+message.sender_id, res, currTime);
               })
             }
           } catch(e) {
@@ -243,20 +228,19 @@ function initGetSaldoConsumer(){
             console.log(strMessage);
             console.log("*********")
           }
-
         }, {noAck: true});
       });
     });
   });
 }
 
-function initTransferPublisher(routingKey, userID, senderID, nilai){
+var publishTransfer = function publishTransfer(routingKey, userID, nilai){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var message = {};
       message.action = "transfer";
       message.user_id = userID;
-      message.sender_id = senderID;
+      message.sender_id = "1406623064";
       message.nilai = nilai;
       message.type = "request";
       var currTime = new Date(Date.now());
@@ -267,12 +251,11 @@ function initTransferPublisher(routingKey, userID, senderID, nilai){
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
       transferQueue.push(nilai)
-      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
 
-function initTransferRespPublisher(routingKey, status_transfer, ts){
+var publishTransferResponse = function publishTransferResponse(routingKey, status_transfer, ts){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var message = {};
@@ -284,30 +267,26 @@ function initTransferRespPublisher(routingKey, status_transfer, ts){
       var ex = 'EX_TRANSFER';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
-      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
 
-function initTransferConsumer(){
+var consumeTransfer = function consumeTransfer(){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var ex = 'EX_TRANSFER';
       var routingKey = 'REQ_1406623064'
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.assertQueue('', {exclusive: true}, function(err, q) {
-        console.log(' [*] Waiting for logs. To exit press CTRL+C');
         ch.bindQueue(q.queue, ex, routingKey);
         routingKey = 'RESP_1406623064'
         ch.bindQueue(q.queue, ex, routingKey);
         ch.consume(q.queue, function(msg) {
-          console.log("Reading message data");
-          console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
           var strMessage = msg.content.toString();
           try{
             var message = JSON.parse(strMessage)
             if(message.type == 'response'){
-              console.log("Status Transfer adalah "+ message.status_transfer)
+              console.log("Status Transfer : "+ message.status_transfer)
               if(message.status_transfer == 1){
                 var nilaiTransfer = transferQueue.shift();
                 ewallet.decreaseSaldo("1406623064", nilaiTransfer).then(function(res){
@@ -322,12 +301,12 @@ function initTransferConsumer(){
               ewallet.transfer(message.user_id, message.nilai).then(function(res){
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-                  initTransferRespPublisher("RESP_"+message.sender_id, res, currTime);
+                  publishTransferResponse("RESP_"+message.sender_id, res, currTime);
               }).catch(function(err){
                   console.log("ini log error dengan message error ", err)
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-                  initTransferRespPublisher("RESP_"+message.sender_id, res, currTime);
+                  publishTransferResponse("RESP_"+message.sender_id, res, currTime);
               })
             }
           } catch(e) {
@@ -343,13 +322,13 @@ function initTransferConsumer(){
   });
 }
 
-function initGetTotalSaldoPublisher(routingKey, userID, senderID){
+var publishGetTotalSaldo = function publishGetTotalSaldo(routingKey, userID){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var message = {};
       message.action = "get_total_saldo";
       message.user_id = userID;
-      message.sender_id = senderID;
+      message.sender_id = "1406623064";
       message.type = "request";
       var currTime = new Date(Date.now());
       currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
@@ -358,12 +337,11 @@ function initGetTotalSaldoPublisher(routingKey, userID, senderID){
       var ex = 'EX_GET_TOTAL_SALDO';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
-      console.log(" Sent a get total saldo message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
 
-function initGetTotalSaldoRespPublisher(routingKey, nilai_saldo, ts){
+var publishGetTotalSaldoResponse = function publishGetTotalSaldoResponse(routingKey, nilai_saldo, ts){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var message = {};
@@ -376,35 +354,31 @@ function initGetTotalSaldoRespPublisher(routingKey, nilai_saldo, ts){
       var ex = 'EX_GET_TOTAL_SALDO';
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.publish(ex, routingKey, new Buffer(message));
-      console.log(" Sent a message with register key %s: and message'%s'", routingKey, message);
     });
   })
 }
 
-function initGetTotalSaldoConsumer(){
+var consumeGetTotalSaldo = function consumeGetTotalSaldo(){
   amqp.connect('amqp://sisdis:sisdis@172.17.0.3:5672', function(err, conn) {
     conn.createChannel(function(err, ch) {
       var ex = 'EX_GET_TOTAL_SALDO';
       var routingKey = 'REQ_1406623064'
       ch.assertExchange(ex, 'direct', {durable: true});
       ch.assertQueue('', {exclusive: true}, function(err, q) {
-        console.log(' [*] Waiting for logs. To exit press CTRL+C');
         ch.bindQueue(q.queue, ex, routingKey);
         routingKey = 'RESP_1406623064'
         ch.bindQueue(q.queue, ex, routingKey);
         ch.consume(q.queue, function(msg) {
-          console.log("Reading message data");
-          console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
           var strMessage = msg.content.toString();
           try{
             var message = JSON.parse(strMessage)
             if(message.type == 'response'){
-              console.log("Total Saldo adalah "+ message.nilai_saldo)
+              console.log("Total Saldo : "+ message.nilai_saldo)
             } else if(message.type == 'request')  {
-              console.log("blelelel")
+              getSaldoQueue.push(message.sender_id)
               for (var index in quorum) {
                 getTotalCounter += 1;
-                initGetSaldoPublisher("REQ_1406623064", "1406623064", "1406623064")
+                publishGetSaldo("REQ_"+quorum[index], message.user_id)
               }
             }
           } catch(e) {
@@ -420,42 +394,30 @@ function initGetTotalSaldoConsumer(){
   });
 }
 
+var initAllConsumer = function initAllConsumer()
+{
+  consumePing()
+  consumeGetSaldo()
+  consumeRegister()
+  consumeGetTotalSaldo()
+  consumeTransfer()
+}
 
-initGetTotalSaldoConsumer()
-initGetSaldoConsumer()
-setTimeout(function(){
-  initGetTotalSaldoPublisher("REQ_1406623064", '1406623064', "1406623064")
-}, 5000);
-
-
-// var flagTotal = 1;
-// initGetSaldoConsumer()
-// initGetTotalSaldoConsumer()
-// setInterval(function(){
-//     if(flagTotal == 1) {
-//         initGetTotalSaldoPublisher("REQ_1406623064", "1406623064", "1406623064", "10000")
-//         flagTotal = 0
-//     }
-//
-// }, 9000);
-
-// initTransferConsumer()
-// setInterval(function(){
-//     initTransferPublisher("REQ_1406623064", "1406623064", "1406623064", "10000")
-// }, 5000);
-
-
-// initGetSaldoConsumer()
-// setInterval(function(){
-//     initGetSaldoPublisher("REQ_1406623064", "1406623064", "1406623064")
-// }, 5000);
-
-// initRegisterConsumer()
-// setInterval(function(){
-//     initRegisterPublisher('REQ_1406623064', '1406623064', 'Akbar Septriyan', '1406623064')
-// }, 5000);
-//
-//
-// initPingPublisher();
-// console.log("init consumer");
-// initPingConsumer();
+module.exports = {
+  publishPing : publishPing,
+  sendRepeatedPing : sendRepeatedPing,
+  consumePing : consumePing,
+  publishRegister : publishRegister,
+  publishRegisterResponse : publishRegisterResponse,
+  consumeRegister : consumeRegister,
+  publishGetSaldo : publishGetSaldo,
+  publishGetSaldoResponse : publishGetSaldoResponse,
+  consumeGetSaldo : consumeGetSaldo,
+  publishTransfer : publishTransfer,
+  publishTransferResponse : publishTransferResponse,
+  consumeTransfer : consumeTransfer,
+  publishGetTotalSaldo : publishGetTotalSaldo,
+  publishGetTotalSaldoResponse : publishGetTotalSaldoResponse,
+  consumeGetTotalSaldo : consumeGetTotalSaldo,
+  initAllConsumer : initAllConsumer
+}

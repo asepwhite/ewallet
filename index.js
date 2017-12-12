@@ -5,6 +5,7 @@ var Promise = require("bluebird");
 const bodyParser = require('body-parser')
 const jsonParser = bodyParser.json();
 const ewallet = require('./ewallet')
+const rabbitMQ = require('./ewallet_msq')
 var stdin = process.openStdin()
 //CLi
 function callOpeningSentences(){
@@ -28,16 +29,16 @@ stdin.addListener("data", function(data) {
       console.log("Silahkan masukan IP untuk di ping: ")
     } else if(input == 2){
       prevCommand = 2
-      console.log("Silahkan masukan url, npm dan nama untuk di register dengan format (url,npm,nama): ")
+      console.log("Silahkan masukan routing key, npm dan nama untuk di register dengan format (routingKey,npm,nama): ")
     } else if(input == 3){
       prevCommand = 3
-      console.log("Silahkan masukan url, dan user_id dengan format (url,user_id): ")
+      console.log("Silahkan masukan routing key, dan user_id dengan format (routingKey,user_id): ")
     } else if(input == 4){
       prevCommand = 4
-      console.log("Silahkan masukan url, user_id dengan format (url,user_id): ")
+      console.log("Silahkan masukan routing key, user_id dengan format (routingKey,user_id): ")
     } else if(input == 5){
       prevCommand = 5
-      console.log("Silahkan masukan url, nilai dan user_id dengan format (url, nilai, user_id): ")
+      console.log("Silahkan masukan routing key, user id dan nilai dengan format (url, user_id, nilai): ")
     }
   } else {
     if(prevCommand == 1){
@@ -47,80 +48,16 @@ stdin.addListener("data", function(data) {
       })
     } else if(prevCommand == 2){
       var params = input.split(',')
-      axios({
-        method:'post',
-        url:"http://"+params[0]+":80/ewallet/register",
-        timeout:10000,
-        data : {
-          user_id: params[1],
-          nama : params[2]
-        }
-      }).then(function(response){
-        console.log(response.data)
-        prevCommand = 0
-      })
+      rabbitMQ.publishRegister(params[0], params[1], params[2])
     } else if(prevCommand == 3){
       var params = input.split(',')
-      axios({
-        method:'post',
-        url:"http://"+params[0]+":80/ewallet/getSaldo",
-        timeout:10000,
-        data : {
-          user_id: params[1]
-        }
-      }).then(function(response){
-        console.log(response.data)
-        if(response.data.nilai_saldo == -1){
-            prevCommand = 2
-            console.log("Silahkan masukan url, npm dan nama untuk di register dengan format (url,npm,nama): ")
-        } else {
-          prevCommand = 0
-        }
-      })
+      rabbitMQ.publishGetSaldo(params[0], params[1])
     } else if(prevCommand == 5){
       var params = input.split(',')
-      axios({
-        method:'post',
-        url:"http://"+params[0]+":80/ewallet/transfer",
-        timeout:10000,
-        data : {
-          user_id: params[2],
-          nilai: params[1]
-        }
-      }).then(function(response){
-        if(response.data.nilai_saldo == -1){
-            prevCommand = 2
-            console.log("Silahkan masukan url, npm dan nama untuk di register dengan format (url,npm,nama): ")
-        } else if (response.data.nilai_saldo < 0){
-            console.log(response.data)
-            prevCommand = 0
-        } else {
-            var statusTransfer = response.data
-            ewallet.decreaseSaldo(params[2], params[1]).then(function(response){
-              if(response == 1){
-                console.log(statusTransfer)
-              }
-              prevCommand = 0
-            }).catch(function(err){
-              console.log("error when decreasing saldo")
-              console.log(err)
-            })
-        }
-      })
+      rabbitMQ.publishTransfer(params[0], params[1], params[2])
     } else if(prevCommand == 4){
       var params = input.split(',')
-      axios({
-        method:'post',
-        url:"http://"+params[0]+":80/ewallet/getTotalSaldo",
-        data : {
-          user_id: params[1]
-        }
-      }).then(function(response){
-        console.log(response.data)
-        prevCommand = 0
-      }).catch(function(err){
-        console.log(err)
-      })
+      rabbitMQ.publishGetTotalSaldo(params[0], params[1])
     }
   }
 });
@@ -251,6 +188,6 @@ app.get('/quorum', function(req,res){
   })
 })
 
-app.listen(80, function(){
+app.listen(3000, function(){
   console.log('app listen on port 80')
 })
