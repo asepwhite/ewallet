@@ -205,6 +205,7 @@ function initGetSaldoConsumer(){
           console.log(" [x] %s: '%s'", msg.fields.routingKey, msg.content.toString());
           var strMessage = msg.content.toString();
           try{
+            console.log("hore ada message")
             var message = JSON.parse(strMessage)
             if(message.type == 'response'){
               console.log('REPONSE FROM ???, GET SALDO IS', message.nilai_saldo)
@@ -416,7 +417,7 @@ initGetTotalSaldoConsumer()
 initGetSaldoConsumer()
 setInterval(function(){
   initGetTotalSaldoPublisher("REQ_1406623064", '1406623064', "1406623064")
-}, 5000);
+}, 9000);
 
 // var flagTotal = 1;
 // initGetSaldoConsumer()
