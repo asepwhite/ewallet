@@ -1,3 +1,4 @@
+var Promise = require("bluebird");
 const ewallet = require('./ewallet')
 const Sequelize = require('sequelize');
 const sequelize = new Sequelize('sisdis', 'root', 'rootroot', {
@@ -17,8 +18,9 @@ const User = sequelize.define('users', {
 var amqp = require('amqplib/callback_api');
 var moment = require('moment')
 var transferQueue = []
-var getTotalSaldoCounter = -1
+var getTotalSaldoFlag = -1
 var getTotalSaldoValue = 0
+var getTotalSaldoJobs = []
 var quorum = ['1406623064', '1406623064', '1406623064', '1406623064', '1406623064']
 var testCounter = 0;
 
@@ -212,27 +214,28 @@ function initGetSaldoConsumer(){
               console.log('REPONSE FROM ???, GET SALDO IS', message.nilai_saldo)
               console.log('RAW MESSAGE '+JSON.stringify(message))
             } else if(message.type == 'request')  {
-              console.log("ini counter get total saldo  "+getTotalSaldoCounter)
-              testCounter += 1
-              console.log(testCounter)
-              ewallet.getSaldo(message.user_id).then(function(res){
-                  var currTime = new Date(Date.now());
-                  currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-                  if(getTotalSaldoCounter > 0) {
-                    getTotalSaldoValue  = getTotalSaldoValue + res
-                  } else if (getTotalSaldoCounter == 0) {
-                    initGetTotalSaldoRespPublisher("RESP_"+message.sender_id, getTotalSaldoValue, currTime)
-                    getTotalSaldoCounter = -1
-                    getTotalSaldoValue = 0
-                  } else {
+              if(getTotalSaldoFlag == 1){
+                getTotalSaldoJobs.push(getTotalSaldoAdder(message))
+                if(getTotalSaldoJobs.length == quorum.length) {
+                  Promise.all(getTotalSaldoJobs).then(function(res){
+                    console.log("INI ADALAH NILAI TOTAL SALDO "+getTotalSaldoValue)
+                    getTotalSaldoFlag = -1
+                  }).catch(function(err){
+                    console.log(err)
+                  })
+                }
+              } else {
+                ewallet.getSaldo(message.user_id).then(function(res){
+                    var currTime = new Date(Date.now());
+                    currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
                     initGetSaldoRespPublisher("RESP_"+message.sender_id, res, currTime);
-                  }
-              }).catch(function(err){
-                  console.log("ini log error dengan message error ", err)
-                  var currTime = new Date(Date.now());
-                  currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-                  initGetSaldoRespPublisher("RESP_"+message.sender_id, res, currTime);
-              })
+                }).catch(function(err){
+                    console.log("ini log error dengan message error ", err)
+                    var currTime = new Date(Date.now());
+                    currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+                    initGetSaldoRespPublisher("RESP_"+message.sender_id, res, currTime);
+                })
+              }
             }
           } catch(e) {
             console.log("error parsing JSON, logging message")
@@ -399,7 +402,7 @@ function initGetTotalSaldoConsumer(){
               console.log("Total Saldo adalah "+ message.nilai_saldo)
             } else if(message.type == 'request')  {
               console.log("MASUK KE SINI")
-              getTotalSaldoCounter = 5;
+              getTotalSaldoFlag = 1;
               for (var index in quorum) {
                 initGetSaldoPublisher("REQ_1406623064", "1406623064", "1406623064")
               }
@@ -417,16 +420,26 @@ function initGetTotalSaldoConsumer(){
   });
 }
 
+function getTotalSaldoAdder(message){
+  ewallet.getSaldo(message.user_id).then(function(res){
+      var currTime = new Date(Date.now());
+      currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+      getTotalSaldoValue += res
+      return Promise.resolve(1)
+  }).catch(function(err){
+      console.log("ini log error dengan message error ", err)
+      var currTime = new Date(Date.now());
+      currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+      initGetSaldoRespPublisher("RESP_"+message.sender_id, res, currTime);
+      return Promise.resolve(1)
+  })
+}
+
 initGetTotalSaldoConsumer()
 initGetSaldoConsumer()
 setTimeout(function(){
   initGetTotalSaldoPublisher("REQ_1406623064", '1406623064', "1406623064")
 }, 5000);
-
-setTimeout(function(){
-console.log("ini counter get total saldo  "+getTotalSaldoCounter)
-}, 10000);
-
 
 
 // var flagTotal = 1;
