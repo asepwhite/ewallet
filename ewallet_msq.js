@@ -21,7 +21,7 @@ var transferQueue = []
 var getSaldoQueue = []
 var getTotalSaldoValue = 0
 var getTotalCounter = 0
-var quorum = ['1406623064', '1406623064', '1406623064', '1406623064', '1406623064']
+var quorum = ['1406543624', '1406565133', '1406527532', '1406543574', '1406543883']
 
 
 var checkQuorum = function checkQuorum() {
@@ -42,7 +42,7 @@ var checkQuorum = function checkQuorum() {
     }));
   }
   Promise.all(diffJobs).then(function(res){
-    return successPing / (successPing + failedPing)
+    return Promise.resolve(successPing / (successPing + failedPing))
   })
 }
 
@@ -146,7 +146,13 @@ var consumeRegister =  function consumeRegister(){
               ewallet.register(message.user_id, message.nama).then(function(res){
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-                  publishRegisterResponse("RESP_"+message.sender_id, res, currTime);
+                  checkQuorum().then(function(quorum){
+                    if(quorum > 5/8){
+                      publishRegisterResponse("RESP_"+message.sender_id, res, currTime);
+                    } else {
+                      publishRegisterResponse("RESP_"+message.sender_id, "-2", currTime);
+                    }
+                  })
               }).catch(function(err){
                   console.log("Error ketika registrasi, status registrasi : ", err)
                   var currTime = new Date(Date.now());
@@ -236,7 +242,11 @@ var consumeGetSaldo = function consumeGetSaldo(){
               ewallet.getSaldo(message.user_id).then(function(res){
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-                  publishGetSaldoResponse("RESP_"+message.sender_id, res, currTime);
+                  if(quorum > 5/8){
+                    publishTransferResponse("RESP_"+message.sender_id, res, currTime);
+                  } else {
+                    publishTransferResponse("RESP_"+message.sender_id, "-2", currTime);
+                  }
               }).catch(function(err){
                   console.log("Error ketika get saldo, status : ", err)
                   var currTime = new Date(Date.now());
@@ -323,7 +333,13 @@ var consumeTransfer = function consumeTransfer(){
               ewallet.transfer(message.user_id, message.nilai).then(function(res){
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
-                  publishTransferResponse("RESP_"+message.sender_id, res, currTime);
+                  checkQuorum().then(function(quorum){
+                    if(quorum > 5/8){
+                      publishTransferResponse("RESP_"+message.sender_id, res, currTime);
+                    } else {
+                      publishTransferResponse("RESP_"+message.sender_id, "-2", currTime);
+                    }
+                  })
               }).catch(function(err){
                   console.log("ini log error dengan message error ", err)
                   var currTime = new Date(Date.now());
