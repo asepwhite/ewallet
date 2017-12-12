@@ -399,7 +399,7 @@ function initGetTotalSaldoConsumer(){
               console.log("MASUK KE SINI")
               getTotalSaldoCounter = 5;
               for (var index in quorum) {
-                initGetSaldoPublisher("REQ_146623064", "1406623064", "1406623064")
+                initGetSaldoPublisher("REQ_1406623064", "1406623064", "1406623064")
               }
             }
           } catch(e) {
