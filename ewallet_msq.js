@@ -211,6 +211,7 @@ function initGetSaldoConsumer(){
               console.log('REPONSE FROM ???, GET SALDO IS', message.nilai_saldo)
               console.log('RAW MESSAGE '+JSON.stringify(message))
             } else if(message.type == 'request')  {
+              console.log("ini counter get total saldo  "+getTotalSaldoCounter)
               ewallet.getSaldo(message.user_id).then(function(res){
                   var currTime = new Date(Date.now());
                   currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
@@ -396,7 +397,6 @@ function initGetTotalSaldoConsumer(){
               console.log("Total Saldo adalah "+ message.nilai_saldo)
             } else if(message.type == 'request')  {
               console.log("MASUK KE SINI")
-              process.exit(0)
               getTotalSaldoCounter = 5;
               for (var index in quorum) {
                 initGetSaldoPublisher("REQ_146623064", "1406623064", "1406623064")
@@ -417,7 +417,7 @@ function initGetTotalSaldoConsumer(){
 
 initGetTotalSaldoConsumer()
 initGetSaldoConsumer()
-setInterval(function(){
+setTimeout(function(){
   initGetTotalSaldoPublisher("REQ_1406623064", '1406623064', "1406623064")
 }, 5000);
 
