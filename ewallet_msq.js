@@ -424,6 +424,7 @@ function getTotalSaldoAdder(message){
   ewallet.getSaldo(message.user_id).then(function(res){
       var currTime = new Date(Date.now());
       currTime = moment(currTime).format("YYYY-MM-DD HH:mm:ss");
+      console.log("nilai saldo "+res);
       getTotalSaldoValue += res
       return Promise.resolve(1)
   }).catch(function(err){
